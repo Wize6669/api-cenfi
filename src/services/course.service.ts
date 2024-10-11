@@ -110,8 +110,6 @@ const updateCourseService = async (updateCourse: Course): Promise<Course | Error
 
       return { error: `Prisma\n Field name: ${fieldName} - Message: ${error.message}`, code: 400 };
     }
-
-    console.log(error)
     return {error: 'Error occurred with the server', code: 500};
   }
 }

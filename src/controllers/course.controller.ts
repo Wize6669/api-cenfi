@@ -35,7 +35,8 @@ const deleteCourseController = async (req: Request, res: Response) => {
   if ('error' in result) {
     return res.status(result.code).json({message: result.error});
   }
-  res.status(result.code).json(result)
+
+  res.status(result.code).json(result);
 }
 
 const listCourseController = async (req: Request, res: Response) => {
