@@ -1,16 +1,16 @@
 ###
 ### POST category
-POST http://localhost:3001/api/v1/category
+POST http://localhost:3001/api/v1/categories
 Content-Type: application/json
 
 {
-    "name": "Verbal"
+    "name": "CCNN"
 }
 
 ###
 
 ### Obtener todas las categorias
-GET http://localhost:3001/api/v1/category?page=1&count=5
+GET http://localhost:3001/api/v1/categories?page=1&count=5
 Content-Type: application/json
 ###
 
@@ -24,7 +24,7 @@ Content-Type: application/json
 
 ###
 ### Obtener una categoria por ID
-GET http://localhost:3001/api/v1/category/1
+GET http://localhost:3001/api/v1/categories/13
 Content-Type: application/json
 
 ###
