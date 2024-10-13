@@ -66,7 +66,7 @@ const uploadImageService = async (type: String, file: Express.Multer.File): Prom
 
     const params = {
       Bucket: config.get('BUCKET_NAME'),
-      Key: `as/${type}/${file.originalname}`,
+      Key: `${type}/${file.originalname}`,
       Body: buffer,
       ContentType: file.mimetype,
     };
