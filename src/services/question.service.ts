@@ -1,10 +1,12 @@
-import { PrismaClient } from '@prisma/client';
-import { QuestionCreate, QuestionCreateResponse } from '../model/question';
-import { ErrorMessage, InfoMessage } from '../model/messages';
-import { handleErrors } from '../utils/handles';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {PrismaClient} from '@prisma/client';
+import {Question, QuestionCreate, QuestionCreateResponse, QuestionList} from '../model/question';
+import {ErrorMessage, InfoMessage} from '../model/messages';
+import {handleErrors} from '../utils/handles';
+import {PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
 
-import { config } from '../config';
+import {config} from '../config';
+import {PaginationResponse} from "../model/pagination";
+import {calculatePagination} from "../utils/pagination.util";
 
 const s3Client = new S3Client({
   region: config.get('BUCKET_REGION'),
@@ -55,6 +57,69 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
   }
 };
 
+const getQuestionByIdService = async (questionsId: number): Promise<Question | ErrorMessage> => {
+  try {
+    const existingQuestion = await prisma.question.findUnique({
+      where: {
+        id: questionsId,
+      },
+      include: {
+        options: true,
+        category: true,
+        Simulator: true,
+      },
+    });
+
+    if (!existingQuestion) {
+      return { error: 'Question not found', code: 404 };
+    }
+
+    return {
+      id: existingQuestion.id,
+      content: existingQuestion.content as object,
+      justification: existingQuestion.justification as object | undefined,
+      answer: existingQuestion.answer,
+      categoryId: existingQuestion.categoryId ?? undefined,
+      simulatorId: existingQuestion.simulatorId ?? undefined,
+    };
+
+  } catch (error) {
+    return handleErrors(error);
+  }
+};
+
+const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<QuestionList>| ErrorMessage> =>{
+  try{
+    const total = await prisma.question.count();
+    const paginationInfo = calculatePagination(page, count, total)
+
+    const questionList = await prisma.question.findMany({
+      skip: (page - 1) * count,
+      take: count,
+      include: {
+        options: true,
+      },
+    });
+
+    const data: QuestionList[] = questionList.map(question => ({
+      id: question.id,
+      content: question.content,
+      justification: question.justification,
+      answer: question.answer,
+      categoryId: question.categoryId,
+      simulatorId: question.simulatorId,
+      options: question.options,
+    }));
+
+    return {
+      ...paginationInfo,
+      data,
+    };
+  } catch (error) {
+    return handleErrors(error);
+  }
+}
+
 const uploadImageService = async (type: String, file: Express.Multer.File): Promise<InfoMessage | ErrorMessage> => {
   try {
     if (!type) {
@@ -87,4 +152,4 @@ const uploadImageService = async (type: String, file: Express.Multer.File): Prom
   }
 };
 
-export { createQuestionService, uploadImageService };
+export { createQuestionService, uploadImageService, questionListService, getQuestionByIdService };
