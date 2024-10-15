@@ -1,5 +1,5 @@
 import {PrismaClient} from '@prisma/client';
-import {Question, QuestionCreate, QuestionCreateResponse, QuestionList} from '../model/question';
+import {Question, QuestionCreate, QuestionCreateResponse} from '../model/question';
 import {ErrorMessage, InfoMessage} from '../model/messages';
 import {handleErrors} from '../utils/handles';
 import {PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
@@ -76,8 +76,8 @@ const getQuestionByIdService = async (questionsId: number): Promise<Question | E
 
     return {
       id: existingQuestion.id,
-      content: existingQuestion.content as object,
-      justification: existingQuestion.justification as object | undefined,
+      content: existingQuestion.content as Object,
+      justification: existingQuestion.justification as Object | undefined,
       answer: existingQuestion.answer,
       categoryId: existingQuestion.categoryId ?? undefined,
       simulatorId: existingQuestion.simulatorId ?? undefined,
@@ -88,7 +88,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<Question | E
   }
 };
 
-const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<QuestionList>| ErrorMessage> =>{
+const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<Question>| ErrorMessage> =>{
   try{
     const total = await prisma.question.count();
     const paginationInfo = calculatePagination(page, count, total)
@@ -101,13 +101,13 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       },
     });
 
-    const data: QuestionList[] = questionList.map(question => ({
+    const data = questionList.map(question => ({
       id: question.id,
-      content: question.content,
-      justification: question.justification,
+      content: question.content as Object,
+      justification: question.justification as Object | undefined,
       answer: question.answer,
-      categoryId: question.categoryId,
-      simulatorId: question.simulatorId,
+      categoryId: question.categoryId ?? undefined,
+      simulatorId: question.simulatorId ?? undefined,
       options: question.options,
     }));
 
