@@ -28,3 +28,7 @@ export interface OptionForm extends Omit<Option, 'id'> {
 
 export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryId' | 'simulatorId'> {
 }
+
+export interface QuestionList extends Question {
+  categoryName?: string;
+}

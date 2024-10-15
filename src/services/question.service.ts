@@ -1,5 +1,5 @@
 import {PrismaClient} from '@prisma/client';
-import {Question, QuestionCreate, QuestionCreateResponse} from '../model/question';
+import {QuestionCreate, QuestionCreateResponse, QuestionList} from '../model/question';
 import {ErrorMessage, InfoMessage} from '../model/messages';
 import {handleErrors} from '../utils/handles';
 import {PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
@@ -57,7 +57,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
   }
 };
 
-const getQuestionByIdService = async (questionsId: number): Promise<Question | ErrorMessage> => {
+const getQuestionByIdService = async (questionsId: number): Promise<QuestionList | ErrorMessage> => {
   try {
     const existingQuestion = await prisma.question.findUnique({
       where: {
@@ -80,6 +80,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<Question | E
       justification: existingQuestion.justification as Object | undefined,
       answer: existingQuestion.answer,
       categoryId: existingQuestion.categoryId ?? undefined,
+      categoryName: existingQuestion.category?.name ?? undefined,
       simulatorId: existingQuestion.simulatorId ?? undefined,
     };
 
@@ -88,7 +89,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<Question | E
   }
 };
 
-const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<Question>| ErrorMessage> =>{
+const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<QuestionList>| ErrorMessage> =>{
   try{
     const total = await prisma.question.count();
     const paginationInfo = calculatePagination(page, count, total)
@@ -98,6 +99,8 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       take: count,
       include: {
         options: true,
+        category: true,
+        Simulator: true
       },
     });
 
@@ -107,6 +110,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       justification: question.justification as Object | undefined,
       answer: question.answer,
       categoryId: question.categoryId ?? undefined,
+      categoryName: question.category?.name ?? undefined,
       simulatorId: question.simulatorId ?? undefined,
       options: question.options,
     }));
