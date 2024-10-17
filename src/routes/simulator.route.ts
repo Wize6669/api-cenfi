@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import {schemaVerifierMiddleware} from "../middlewares/schemaVerifier.middleware";
-import {simulatorSchema, simulatorSchemaParams, updateSimulatorSchema} from "../schemasJoi/simulator.schema";
+import {
+  createSimulatorSchema,
+  simulatorSchemaParams,
+  updateSimulatorSchema
+} from "../schemasJoi/simulator.schema";
 import {
   createSimulatorController, deleteSimulatorController,
   getSimulatorByIdController,
@@ -12,7 +16,7 @@ const router = Router();
 
 router.get('/', [schemaVerifierMiddleware({query: paginationSchema})], simulatorListController);
 router.get('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams})],getSimulatorByIdController);
-router.post('/', [schemaVerifierMiddleware({body: simulatorSchema})],createSimulatorController);
+router.post('/', [schemaVerifierMiddleware({body: createSimulatorSchema})],createSimulatorController);
 router.post('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams}), schemaVerifierMiddleware({body: updateSimulatorSchema})], updateSimulatorController);
 router.delete('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams})], deleteSimulatorController);
 

@@ -1,34 +1,67 @@
-export interface Simulator{
-  id?: string;
+import {Question, QuestionCreate} from "./question";
+
+interface CategoryQuestions {
+  categoryId: number;
+  numberOfQuestions: number;
+}
+
+export interface Simulator {
+  id: string;
+  name: string;
+  duration: number;
+  navigate: boolean;
+  visibility: boolean;
+  review: boolean;
+  number_of_questions: number;
+  questions?: Question[];
+}
+
+export interface SimulatorWithQuestions extends Simulator {
+  questions: Question[];
+}
+
+export interface SimulatorRequest {
   name: string;
   password: string;
   duration: number;
-  visibility: boolean;
   navigate: boolean;
-  number_of_questions?: number;
+  visibility: boolean;
+  review: boolean;
+  categoryQuestions: CategoryQuestions[];
 }
 
-export interface SimulatorCreate extends Omit<Simulator, 'password'> {}
-
-/*export interface SimulatorCreate {
+export interface SimulatorResponse {
   id: string;
   name: string;
   duration: number;
   visibility: boolean;
   navigate: boolean;
+  review: boolean;
   number_of_questions: number;
-  questions: {
-    id: number;
-    statement: string;
-    imageName?: string;
-    justification?: string;
-    answer: number;
-    options: {
-      id: number;
-      statement: string;
-      imageName?: string;
-    }[];
-    categoryId?: number;
-  }[];
+  questions?: QuestionCreate[];
 }
-*/
+
+export interface SimulatorUpdate {
+  id: string;
+  name: string;
+  password?: string;
+  duration: number;
+  navigate: boolean;
+  visibility: boolean;
+  review: boolean;
+  categoryQuestions?: CategoryQuestions[];
+}
+
+export interface SimulatorId {
+  id: string;
+}
+
+export interface SimulatorCreate {
+  id: string;
+  name: string;
+  duration: number;
+  visibility: boolean;
+  navigate: boolean;
+  review: boolean;
+  number_of_questions: number;
+}

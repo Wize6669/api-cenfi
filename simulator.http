@@ -4,10 +4,11 @@ POST http://localhost:3001/api/v1/simulators
 Content-Type: application/json
 
 {
-    "name": "Simulador EPN",
+    "name": "Simulador q",
     "password": "Aajifofo8$",
     "duration": 70,
     "navigate": true,
+    "review": true,
     "visibility": true
 }
 

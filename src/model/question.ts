@@ -1,11 +1,14 @@
+import {SimulatorId} from "./simulator";
+
 export interface Question {
   id?: number;
   content: object;
   justification?: object;
   answer: number;
   categoryId?: number;
-  simulatorId?: string;
+  simulators?: SimulatorId[]; // Relación many-to-many con simuladores
 }
+
 
 export interface QuestionCreate {
   id?: number;
@@ -14,8 +17,9 @@ export interface QuestionCreate {
   answer: number;
   options: OptionForm[];
   categoryId?: number;
-  simulatorId?: string;
+  simulators?: SimulatorId[];  // Relación many-to-many con simuladores
 }
+
 
 export interface Option {
   id: number;
@@ -26,7 +30,7 @@ export interface Option {
 export interface OptionForm extends Omit<Option, 'id'> {
 }
 
-export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryId' | 'simulatorId'> {
+export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryId' | 'simulators'> {
 }
 
 export interface QuestionList extends Question {

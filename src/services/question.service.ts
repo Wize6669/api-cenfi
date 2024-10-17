@@ -30,32 +30,37 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
             content: option.content,
           })),
         },
-        categoryId: Number(question.categoryId),
-        simulatorId: question.simulatorId ?? null,
+        categoryId: question.categoryId ? Number(question.categoryId) : null,
+        simulators: question.simulators && question.simulators.length > 0
+          ? { connect: question.simulators.map((simulator) => ({ id: simulator.id })) }
+          : undefined,
       },
       include: {
         options: true,
+        simulators: true,
       },
     });
 
-    //Si la pregunta está asociada a un simulador, actualizamos el número de preguntas
-    if (question.simulatorId) {
-      await prisma.simulator.update({
-        where: {id: question.simulatorId},
-        data: {number_of_questions: {increment: 1}}
-      });
+    if (question.simulators && question.simulators.length > 0) {
+      for (const simulator of question.simulators) {
+        await prisma.simulator.update({
+          where: { id: simulator.id },
+          data: { number_of_questions: { increment: 1 } },
+        });
+      }
     }
 
     return {
       id: newQuestion.id,
       categoryId: newQuestion.categoryId || undefined,
-      simulatorId: newQuestion.simulatorId || undefined
+      simulators: newQuestion.simulators.map(sim => ({ id: sim.id })),
     };
   } catch (error) {
-
     return handleErrors(error);
   }
 };
+
+
 
 const getQuestionByIdService = async (questionsId: number): Promise<QuestionList | ErrorMessage> => {
   try {
@@ -66,7 +71,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionList
       include: {
         options: true,
         category: true,
-        Simulator: true,
+        simulators: true,
       },
     });
 
@@ -81,7 +86,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionList
       answer: existingQuestion.answer,
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
-      simulatorId: existingQuestion.simulatorId ?? undefined,
+      simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
     };
 
   } catch (error) {
@@ -100,7 +105,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       include: {
         options: true,
         category: true,
-        Simulator: true
+        simulators: true,
       },
     });
 
@@ -111,7 +116,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       answer: question.answer,
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
-      simulatorId: question.simulatorId ?? undefined,
+      simulators: question.simulators.map(sim => ({ id: sim.id })),
       options: question.options,
     }));
 

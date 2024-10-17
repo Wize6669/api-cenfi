@@ -7,8 +7,16 @@ import {
 } from "../services/simulator.service";
 
 const createSimulatorController = async (req: Request, res: Response) => {
-  const {name, password, duration, navigate, visibility} = req.body;
-  const result = await createSimulatorService({name, password, duration, navigate, visibility})
+  const {name, password, duration, navigate, review, visibility, categoryQuestions} = req.body;
+  const result = await createSimulatorService({
+    name,
+    password,
+    duration,
+    navigate,
+    review,
+    visibility,
+    categoryQuestions: categoryQuestions || []
+  })
 
   if ('error' in result) {
     return res.status(result.code).json({message: result.error});
@@ -18,8 +26,17 @@ const createSimulatorController = async (req: Request, res: Response) => {
 
 const updateSimulatorController = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, password, duration, navigate, visibility } = req.body;
-  const result = await updateSimulatorService({ id, name, password, duration, navigate, visibility })
+  const { name, password, duration, navigate, review, visibility, categoryQuestions } = req.body;
+  const result = await updateSimulatorService({
+    id,
+    name,
+    password,
+    duration,
+    navigate,
+    review,
+    visibility,
+    categoryQuestions: categoryQuestions || undefined
+  })
 
   if ('error' in result) {
     return res.status(result.code).json({message: result.error});
