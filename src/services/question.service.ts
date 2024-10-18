@@ -24,10 +24,10 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
       data: {
         content: question.content,
         justification: question.justification,
-        answer: Number(question.answer),
         options: {
           create: question.options.map((option) => ({
             content: option.content,
+            isCorrect: option.isCorrect,
           })),
         },
         categoryId: question.categoryId ? Number(question.categoryId) : null,
@@ -83,7 +83,6 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionList
       id: existingQuestion.id,
       content: existingQuestion.content as Object,
       justification: existingQuestion.justification as Object | undefined,
-      answer: existingQuestion.answer,
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
@@ -113,7 +112,6 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       id: question.id,
       content: question.content as Object,
       justification: question.justification as Object | undefined,
-      answer: question.answer,
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
       simulators: question.simulators.map(sim => ({ id: sim.id })),

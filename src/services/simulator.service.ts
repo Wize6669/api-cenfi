@@ -1,4 +1,4 @@
-import {PrismaClient} from "@prisma/client";
+import {Prisma, PrismaClient} from "@prisma/client";
 import {
   SimulatorRequest,
   SimulatorResponse,
@@ -30,33 +30,44 @@ const createSimulatorService = async (
       return { error: 'Simulator already exists', code: 409 };
     }
 
+    // Validar cantidad de preguntas por categoría
+    for (const categoryQuestion of simulatorData.categoryQuestions) {
+      // Obtener el total de preguntas disponibles para esta categoría
+      const [{ count }] = await prisma.$queryRaw<[{ count: number }]>`
+        SELECT COUNT(*) as count
+        FROM "Question"
+        WHERE "categoryId" = ${categoryQuestion.categoryId}
+      `;
+
+      if (count < categoryQuestion.numberOfQuestions) {
+        return {
+          error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
+          code: 400
+        };
+      }
+    }
+
     // Encriptar contraseña
     const hashedPassword = await bcrypt.hash(simulatorData.password, 10);
 
-    // Seleccionar preguntas aleatorias para cada categoría
+    // Seleccionar preguntas aleatorias para cada categoría usando SQL nativo
     let selectedQuestionIds: number[] = [];
 
     for (const categoryQuestion of simulatorData.categoryQuestions) {
-      const questions = await prisma.question.findMany({
-        where: {
-          categoryId: categoryQuestion.categoryId,
-          id: {
-            notIn: selectedQuestionIds
-          }
-        },
-        take: categoryQuestion.numberOfQuestions,
-        orderBy: {
-          id: 'asc'
-        },
-        select: {
-          id: true
-        }
-      });
+      // Cosulta SQL
+      const randomQuestions = await prisma.$queryRaw<{ id: number }[]>`
+        SELECT id
+        FROM "Question"
+        WHERE "categoryId" = ${categoryQuestion.categoryId}
+          ${selectedQuestionIds.length > 0 ? Prisma.sql`AND id NOT IN (${Prisma.join(selectedQuestionIds)})` : Prisma.sql``}
+        ORDER BY RANDOM()
+          LIMIT ${categoryQuestion.numberOfQuestions}
+      `;
 
-      selectedQuestionIds = [...selectedQuestionIds, ...questions.map(q => q.id)];
+      selectedQuestionIds = [...selectedQuestionIds, ...randomQuestions.map(q => q.id)];
     }
 
-    // Crear el simulador y conectar con las preguntas existentes
+    // Crear el simulador y conectar con las preguntas seleccionadas
     const newSimulator = await prisma.simulator.create({
       data: {
         name: simulatorData.name,
@@ -84,10 +95,10 @@ const createSimulatorService = async (
       id: question.id,
       content: question.content as Object,
       justification: question.justification as Object,
-      answer: question.answer,
       options: question.options.map(opt => ({
         id: opt.id,
         content: opt.content as Object,
+        isCorrect: opt.isCorrect
       })),
       categoryId: question.categoryId ?? undefined,
       simulators: [{ id: newSimulator.id }]
@@ -106,8 +117,8 @@ const createSimulatorService = async (
 
   } catch (error) {
     return handleErrors(error);
-    }
-  };
+  }
+};
 
 const updateSimulatorService = async (
   updateSimulator: SimulatorUpdate
@@ -126,33 +137,51 @@ const updateSimulatorService = async (
       return { error: 'Simulator not found', code: 404 };
     }
 
+    // Validar cantidad de preguntas por categoría si hay actualización de preguntas
+    if (updateSimulator.categoryQuestions && updateSimulator.categoryQuestions.length > 0) {
+      for (const categoryQuestion of updateSimulator.categoryQuestions) {
+        // Obtener el total de preguntas disponibles para esta categoría
+        const [{ count }] = await prisma.$queryRaw<[{ count: number }]>`
+          SELECT COUNT(*) as count
+          FROM "Question"
+          WHERE "categoryId" = ${categoryQuestion.categoryId}
+        `;
+
+        if (count < categoryQuestion.numberOfQuestions) {
+          return {
+            error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
+            code: 400
+          };
+        }
+      }
+    }
+    
     const hashedPassword = updateSimulator.password
       ? await bcrypt.hash(updateSimulator.password, 10)
       : existingSimulator.password;
 
-    let selectedQuestions: { id: number }[] = [];
+    let selectedQuestionIds: number[] = [];
 
     // Si hay nuevas categorías de preguntas para actualizar
     if (updateSimulator.categoryQuestions && updateSimulator.categoryQuestions.length > 0) {
       for (const categoryQuestion of updateSimulator.categoryQuestions) {
-        const questions = await prisma.question.findMany({
-          where: {
-            categoryId: categoryQuestion.categoryId,
-            id: {
-              notIn: selectedQuestions.map(q => q.id)
-            }
-          },
-          select: {
-            id: true
-          },
-          take: categoryQuestion.numberOfQuestions,
-        });
+        // Usar SQL nativo para seleccionar preguntas aleatorias
+        const randomQuestions = await prisma.$queryRaw<{ id: number }[]>`
+          SELECT id
+          FROM "Question"
+          WHERE "categoryId" = ${categoryQuestion.categoryId}
+          ${selectedQuestionIds.length > 0 ?
+          Prisma.sql`AND id NOT IN (${Prisma.join(selectedQuestionIds)})` :
+          Prisma.sql``}
+          ORDER BY RANDOM()
+          LIMIT ${categoryQuestion.numberOfQuestions}
+        `;
 
-        selectedQuestions = [...selectedQuestions, ...questions];
+        selectedQuestionIds = [...selectedQuestionIds, ...randomQuestions.map(q => q.id)];
       }
     }
 
-    // Actualizar el simulador con la inclusión de las preguntas y opciones
+    // Actualizar el simulador
     const updatedSimulator = await prisma.simulator.update({
       where: {
         id: updateSimulator.id,
@@ -164,10 +193,10 @@ const updateSimulatorService = async (
         navigate: updateSimulator.navigate,
         visibility: updateSimulator.visibility,
         review: updateSimulator.review,
-        number_of_questions: selectedQuestions.length || existingSimulator.questions.length,
-        questions: selectedQuestions.length > 0 ? {
-          set: [], // Primero desconectamos todas las preguntas existentes
-          connect: selectedQuestions // Conectamos las nuevas preguntas
+        number_of_questions: selectedQuestionIds.length || existingSimulator.questions.length,
+        questions: selectedQuestionIds.length > 0 ? {
+          set: [],
+          connect: selectedQuestionIds.map(id => ({ id }))
         } : undefined
       },
       include: {
@@ -184,10 +213,10 @@ const updateSimulatorService = async (
       id: question.id,
       content: question.content as Object,
       justification: question.justification as Object,
-      answer: question.answer,
       options: question.options.map(opt => ({
         id: opt.id,
         content: opt.content as Object,
+        isCorrect: opt.isCorrect
       })),
       categoryId: question.categoryId ?? undefined,
       simulators: [{ id: updatedSimulator.id }]
@@ -240,10 +269,10 @@ const simulatorListService = async (
         id: question.id,
         content: question.content as Object,
         justification: question.justification as Object,
-        answer: question.answer,
         options: question.options.map(opt => ({
           id: opt.id,
           content: opt.content as Object,
+          isCorrect: opt.isCorrect
         })),
         categoryId: question.categoryId ?? undefined,
         simulators: [{ id: simulator.id }]
@@ -299,7 +328,6 @@ const getSimulatorByIdService = async (
       id: question.id,
       content: question.content as Object,
       justification: question.justification as Object || undefined,
-      answer: question.answer,
       categoryId: question.categoryId ?? undefined,
       category: question.category ? {
         id: question.category.id,
@@ -308,6 +336,7 @@ const getSimulatorByIdService = async (
       options: question.options.map(option => ({
         id: option.id,
         content: option.content,
+        isCorrect: option.isCorrect,
         questionId: option.questionId
       }))
     }));

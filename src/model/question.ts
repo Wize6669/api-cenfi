@@ -4,7 +4,6 @@ export interface Question {
   id?: number;
   content: object;
   justification?: object;
-  answer: number;
   categoryId?: number;
   simulators?: SimulatorId[]; // Relación many-to-many con simuladores
 }
@@ -14,7 +13,6 @@ export interface QuestionCreate {
   id?: number;
   content: object;
   justification?: object;
-  answer: number;
   options: OptionForm[];
   categoryId?: number;
   simulators?: SimulatorId[];  // Relación many-to-many con simuladores
@@ -24,6 +22,7 @@ export interface QuestionCreate {
 export interface Option {
   id: number;
   content: object;
+  isCorrect: boolean;
 }
 
 

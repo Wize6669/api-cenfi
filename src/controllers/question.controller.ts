@@ -7,14 +7,13 @@ import {
 } from '../services/question.service';
 
 const createQuestionController = async (req: Request, res: Response) => {
-  const {categoryId, answer, question, justification, options} = req.body;
+  const {categoryId, question, justification, options} = req.body;
 
   const result = await createQuestionService({
     content: question,
     justification,
     options,
     categoryId,
-    answer
   });
 
   if ('error' in result) {

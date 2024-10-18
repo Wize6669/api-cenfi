@@ -17,7 +17,9 @@ const handleErrors = (error: any) => {
 
     return {error: `Prisma: Campo: ${fieldName} - Mensaje: ${message}`, code: 400};
   }
+  console.error(error)
   return {error: 'Ocurrió un error en el servidor', code: 500};
+
 };
 
 export { handleErrors };
