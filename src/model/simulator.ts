@@ -16,6 +16,10 @@ export interface Simulator {
   questions?: Question[];
 }
 
+export interface AuthSimulator extends Omit<Simulator, 'questions'> {
+
+}
+
 export interface SimulatorWithQuestions extends Simulator {
   password?: string;
   questions: Question[];
