@@ -79,16 +79,14 @@ const createSimulatorSchema = Joi.object({
 
 const updateSimulatorSchema = Joi.object({
   name: Joi.string().min(3).max(255).optional(),
-  password: Joi.string()
-    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})'))
-    .optional(),
+  password: Joi.string().optional(),
   duration: Joi.number().integer().min(1).optional(),
   navigate: Joi.boolean().optional(),
   review: Joi.boolean().optional(),
   visibility: Joi.boolean().optional(),
   categoryQuestions: Joi.array()
     .items(Joi.object({
-      categoryId: Joi.string().required(),
+      categoryId: Joi.number().integer().required(),
       numberOfQuestions: Joi.number().integer().min(0).required(),
     }))
     .optional()

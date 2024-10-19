@@ -17,7 +17,9 @@ export interface Simulator {
 }
 
 export interface SimulatorWithQuestions extends Simulator {
+  password?: string;
   questions: Question[];
+  categoryQuestions: CategoryQuestions[];
 }
 
 export interface SimulatorRequest {
@@ -42,7 +44,7 @@ export interface SimulatorResponse {
 }
 
 export interface SimulatorUpdate {
-  id: string;
+  id?: string;
   name: string;
   password?: string;
   duration: number;

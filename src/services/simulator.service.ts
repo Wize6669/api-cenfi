@@ -155,7 +155,7 @@ const updateSimulatorService = async (
         }
       }
     }
-    
+
     const hashedPassword = updateSimulator.password
       ? await bcrypt.hash(updateSimulator.password, 10)
       : existingSimulator.password;
@@ -341,23 +341,38 @@ const getSimulatorByIdService = async (
       }))
     }));
 
+    // Calculamos categoryQuestions
+    const categoryQuestions = formattedQuestions.reduce((acc, question) => {
+      if (question.categoryId) {
+        acc[question.categoryId] = (acc[question.categoryId] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<number, number>);
+
+    // Transformamos el objeto en un array de CategoryQuestions
+    const categoryQuestionsArray = Object.entries(categoryQuestions).map(([categoryId, numberOfQuestions]) => ({
+      categoryId: parseInt(categoryId), // Convertimos el categoryId a número si es necesario
+      numberOfQuestions
+    }));
+
     // Retornamos el simulador con el formato correcto
     return {
       id: existingSimulator.id,
       name: existingSimulator.name,
+      password: existingSimulator.password, // Incluimos la contraseña hasheada
       duration: existingSimulator.duration,
       navigate: existingSimulator.navigate,
       visibility: existingSimulator.visibility,
       review: existingSimulator.review,
       number_of_questions: existingSimulator.number_of_questions,
-      questions: formattedQuestions
+      questions: formattedQuestions,
+      categoryQuestions: categoryQuestionsArray
     };
 
   } catch (error) {
     return handleErrors(error);
   }
 };
-
 
 const deleteSimulatorService = async (simulatorId: string): Promise<InfoMessage | ErrorMessage> => {
   try {
