@@ -17,8 +17,9 @@ POST http://localhost:3001/api/v1/auth/sign-in
 Content-Type: application/json
 
 {
-    "email": "juan.perez1@example.com",
-    "password": "|]xAy?nv"
+    "email": "fran.rodri10@example.com",
+    "password": "supersecurepassword",
+    "roleId": 1
 }
 
 ###

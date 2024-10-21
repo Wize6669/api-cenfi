@@ -1,13 +1,19 @@
 import { Request, Response } from 'express';
+import {singInSimulatorService} from "../services/authSimulator.service";
+import {generateAccessToken} from "../utils/generateJWT.util";
 
 const signInSimulatorController = async (req: Request, res: Response) => {
   const { simulatorId, password } = req.body;
 
-  const result = await signInSimulatorController(simulatorId, password);
+  const result = await singInSimulatorService(simulatorId, password);
 
   if('error' in result) {
     return res.status(result.code).json({message: result.error});
   }
 
-  res.status(200).json(result);
+  const token = generateAccessToken(result);
+
+  res.status(200).json({...result, token});
 }
+
+export { signInSimulatorController }

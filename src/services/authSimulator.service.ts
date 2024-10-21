@@ -11,6 +11,7 @@ const singInSimulatorService = async (simulatorId: string, password: string): Pr
     const simulator = await prisma.simulator.findFirst({
       where: {
         id: simulatorId,
+        visibility: true,
       }
     });
 
@@ -46,3 +47,5 @@ const singInSimulatorService = async (simulatorId: string, password: string): Pr
     };
   }
 }
+
+export { singInSimulatorService }

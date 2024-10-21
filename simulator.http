@@ -40,3 +40,13 @@ Content-Type: application/json
 ### Eliminar un simulador
 DELETE http://localhost:3001/api/v1/simulators/5c09863e-0df1-466a-8a50-7289463f5f44
 Content-Type: application/json
+
+###
+### Sign In simulators
+POST http://localhost:3001/api/v1/auth-simulators/sign-in-simulator
+Content-Type: application/json
+
+{
+    "simulatorId":"c5fac8b4-f930-437a-b4ca-9feedc81f4e9",
+    "password": "a@R0R|>2^SKi"
+}
