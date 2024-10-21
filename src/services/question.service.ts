@@ -1,5 +1,5 @@
 import {PrismaClient} from '@prisma/client';
-import {QuestionCreate, QuestionCreateResponse, QuestionList} from '../model/question';
+import { QuestionCreate, QuestionCreateResponse, QuestionGet, QuestionList } from '../model/question';
 import {ErrorMessage, InfoMessage} from '../model/messages';
 import {handleErrors} from '../utils/handles';
 import {PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
@@ -62,7 +62,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
 
 
 
-const getQuestionByIdService = async (questionsId: number): Promise<QuestionList | ErrorMessage> => {
+const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet | ErrorMessage> => {
   try {
     const existingQuestion = await prisma.question.findUnique({
       where: {
@@ -80,12 +80,12 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionList
     }
 
     return {
-      id: existingQuestion.id,
       content: existingQuestion.content as Object,
       justification: existingQuestion.justification as Object | undefined,
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
+      options: existingQuestion.options,
     };
 
   } catch (error) {

@@ -1,4 +1,4 @@
-import {SimulatorId} from "./simulator";
+import { SimulatorId } from './simulator';
 
 export interface Question {
   id?: number;
@@ -34,4 +34,9 @@ export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryI
 
 export interface QuestionList extends Question {
   categoryName?: string;
+}
+
+export interface QuestionGet extends Question {
+  categoryName?: string;
+  options:object;
 }
