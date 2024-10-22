@@ -16,9 +16,9 @@ export interface Simulator {
   questions?: Question[];
 }
 
-export interface AuthSimulator extends Omit<Simulator, 'questions'> {
+export interface AuthSimulator extends Omit<Simulator, 'questions'> {}
 
-}
+export interface SimulatorChangePassword extends Pick<Simulator, 'id'>{}
 
 export interface SimulatorWithQuestions extends Simulator {
   password?: string;
@@ -50,7 +50,6 @@ export interface SimulatorResponse {
 export interface SimulatorUpdate {
   id?: string;
   name: string;
-  password?: string;
   duration: number;
   navigate: boolean;
   visibility: boolean;
@@ -60,14 +59,4 @@ export interface SimulatorUpdate {
 
 export interface SimulatorId {
   id: string;
-}
-
-export interface SimulatorCreate {
-  id: string;
-  name: string;
-  duration: number;
-  visibility: boolean;
-  navigate: boolean;
-  review: boolean;
-  number_of_questions: number;
 }

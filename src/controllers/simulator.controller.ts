@@ -2,7 +2,7 @@ import {Request, Response} from 'express';
 import {
   createSimulatorService,
   deleteSimulatorService,
-  getSimulatorByIdService, simulatorListService,
+  getSimulatorByIdService, resetSimulatorPasswordService, simulatorListService,
   updateSimulatorService
 } from "../services/simulator.service";
 
@@ -26,11 +26,10 @@ const createSimulatorController = async (req: Request, res: Response) => {
 
 const updateSimulatorController = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, password, duration, navigate, review, visibility, categoryQuestions } = req.body;
+  const { name, duration, navigate, review, visibility, categoryQuestions } = req.body;
   const result = await updateSimulatorService({
     id,
     name,
-    password,
     duration,
     navigate,
     review,
@@ -79,10 +78,23 @@ const simulatorListController = async (req: Request, res: Response) => {
   res.status(200).json(result);
 }
 
+const resetSimulatorPasswordController = async (req: Request, res: Response) => {
+  const { id, newPassword } = req.body;
+
+  const result = await resetSimulatorPasswordService(id, newPassword);
+
+  if ('error' in result) {
+    return res.status(result.code).json({message: result.error});
+  }
+
+  res.status(200).json(result);
+}
+
 export {
   createSimulatorController,
   deleteSimulatorController,
   simulatorListController,
   updateSimulatorController,
-  getSimulatorByIdController
+  getSimulatorByIdController,
+  resetSimulatorPasswordController
 };

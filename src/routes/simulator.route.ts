@@ -7,7 +7,7 @@ import {
 } from "../schemasJoi/simulator.schema";
 import {
   createSimulatorController, deleteSimulatorController,
-  getSimulatorByIdController,
+  getSimulatorByIdController, resetSimulatorPasswordController,
   simulatorListController, updateSimulatorController
 } from "../controllers/simulator.controller";
 import {paginationSchema} from "../schemasJoi/pagination.schema";
@@ -19,5 +19,6 @@ router.get('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams})],g
 router.post('/', [schemaVerifierMiddleware({body: createSimulatorSchema})],createSimulatorController);
 router.post('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams}), schemaVerifierMiddleware({body: updateSimulatorSchema})], updateSimulatorController);
 router.delete('/:id', [schemaVerifierMiddleware({params: simulatorSchemaParams})], deleteSimulatorController);
+router.put('/reset-simulator-password', resetSimulatorPasswordController)
 
 export { router };

@@ -79,7 +79,6 @@ const createSimulatorSchema = Joi.object({
 
 const updateSimulatorSchema = Joi.object({
   name: Joi.string().min(3).max(255).optional(),
-  password: Joi.string().optional(),
   duration: Joi.number().integer().min(1).optional(),
   navigate: Joi.boolean().optional(),
   review: Joi.boolean().optional(),

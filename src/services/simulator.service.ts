@@ -1,5 +1,6 @@
 import {Prisma, PrismaClient} from "@prisma/client";
 import {
+  SimulatorChangePassword,
   SimulatorRequest,
   SimulatorResponse,
   SimulatorUpdate,
@@ -156,10 +157,6 @@ const updateSimulatorService = async (
       }
     }
 
-    const hashedPassword = updateSimulator.password
-      ? await bcrypt.hash(updateSimulator.password, 10)
-      : existingSimulator.password;
-
     let selectedQuestionIds: number[] = [];
 
     // Si hay nuevas categorías de preguntas para actualizar
@@ -188,7 +185,6 @@ const updateSimulatorService = async (
       },
       data: {
         name: updateSimulator.name,
-        password: hashedPassword,
         duration: updateSimulator.duration,
         navigate: updateSimulator.navigate,
         visibility: updateSimulator.visibility,
@@ -402,10 +398,49 @@ const deleteSimulatorService = async (simulatorId: string): Promise<InfoMessage 
   }
 }
 
+const resetSimulatorPasswordService = async (id:string, newPassword: string): Promise<SimulatorChangePassword | ErrorMessage> => {
+  try {
+    const existingSimulator = await prisma.simulator.findFirst({
+      where: {
+        id: id,
+      },
+    });
+
+    if(!existingSimulator) {
+      return { error: 'Simulator not found', code: 404 };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const simulator = await prisma.simulator.update({
+      where: {
+        id: id
+      },
+      data: {
+        password: hashedPassword,
+      }
+    });
+
+    return {
+      id: simulator.id
+    };
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      const fieldName = error.meta?.field_name;
+
+      return { error: `Prisma\n Field name: ${fieldName} - Message: ${error.message}`, code: 400 };
+    }
+    console.log(error);
+    return {error: 'Error occurred with the server', code: 500};
+
+  }
+}
+
 export {
     createSimulatorService,
     deleteSimulatorService,
     updateSimulatorService,
     simulatorListService,
-    getSimulatorByIdService
+    getSimulatorByIdService,
+    resetSimulatorPasswordService
 }
