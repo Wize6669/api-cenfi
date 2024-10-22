@@ -34,4 +34,5 @@ export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryI
 
 export interface QuestionList extends Question {
   categoryName?: string;
+  options?: Option[];
 }

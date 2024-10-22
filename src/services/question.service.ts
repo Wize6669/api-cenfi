@@ -86,6 +86,11 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionList
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
+      options: existingQuestion.options.map(opt => ({
+        id: opt.id,
+        content: opt.content as Object,
+        isCorrect: opt.isCorrect
+      })),
     };
 
   } catch (error) {
@@ -115,7 +120,11 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
       simulators: question.simulators.map(sim => ({ id: sim.id })),
-      options: question.options,
+      options: question.options.map(opt => ({
+        id: opt.id,
+        content: opt.content as Object,
+        isCorrect: opt.isCorrect
+      })),
     }));
 
     return {
