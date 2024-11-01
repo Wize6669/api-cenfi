@@ -151,12 +151,12 @@ const updateSimulatorService = async (
           WHERE "categoryId" = ${categoryQuestion.categoryId}
         `;
 
-          if (count < categoryQuestion.numberOfQuestions) {
-            return {
-              error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
-              code: 400
-            };
-          }
+        if (count < categoryQuestion.numberOfQuestions) {
+          return {
+            error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
+            code: 400
+          };
+        }
       }
     }
 
@@ -170,11 +170,11 @@ const updateSimulatorService = async (
           SELECT id
           FROM "Question"
           WHERE "categoryId" = ${categoryQuestion.categoryId}
-          ${selectedQuestionIds.length > 0 ?
-          Prisma.sql`AND id NOT IN (${Prisma.join(selectedQuestionIds)})` :
-          Prisma.sql``}
+            ${selectedQuestionIds.length > 0 ?
+              Prisma.sql`AND id NOT IN (${Prisma.join(selectedQuestionIds)})` :
+              Prisma.sql``}
           ORDER BY RANDOM()
-          LIMIT ${categoryQuestion.numberOfQuestions}
+            LIMIT ${categoryQuestion.numberOfQuestions}
         `;
 
         selectedQuestionIds = [...selectedQuestionIds, ...randomQuestions.map(q => q.id)];
@@ -447,10 +447,10 @@ const resetSimulatorPasswordService = async (id:string, newPassword: string): Pr
 }
 
 export {
-    createSimulatorService,
-    deleteSimulatorService,
-    updateSimulatorService,
-    simulatorListService,
-    getSimulatorByIdService,
-    resetSimulatorPasswordService
+  createSimulatorService,
+  deleteSimulatorService,
+  updateSimulatorService,
+  simulatorListService,
+  getSimulatorByIdService,
+  resetSimulatorPasswordService
 }
