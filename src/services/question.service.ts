@@ -1,20 +1,10 @@
-import {PrismaClient} from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { QuestionCreate, QuestionCreateResponse, QuestionGet, QuestionList } from '../model/question';
-import {ErrorMessage, InfoMessage} from '../model/messages';
-import {handleErrors} from '../utils/handles';
-import {PutObjectCommand, S3Client} from '@aws-sdk/client-s3';
-
-import {config} from '../config';
-import {PaginationResponse} from "../model/pagination";
-import {calculatePagination} from "../utils/pagination.util";
-
-const s3Client = new S3Client({
-  region: config.get('BUCKET_REGION'),
-  credentials: {
-    accessKeyId: config.get('ACCESS_KEY'),
-    secretAccessKey: config.get('SECRET_ACCESS')
-  }
-});
+import { ErrorMessage, InfoMessage } from '../model/messages';
+import { handleErrors } from '../utils/handles';
+import { PaginationResponse } from '../model/pagination';
+import { calculatePagination } from '../utils/pagination.util';
+import { getImageTitles, uploadImageService, deleteImagesService } from './image.service';
 
 const prisma = new PrismaClient();
 
@@ -36,7 +26,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
         },
         categoryId: question.categoryId ? Number(question.categoryId) : null,
         simulators: question.simulators && question.simulators.length > 0
-          ? { connect: question.simulators.map((simulator) => ({ id: simulator.id })) }
+          ? {connect: question.simulators.map((simulator) => ({id: simulator.id}))}
           : undefined,
       },
       include: {
@@ -49,19 +39,19 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     if (question.simulators && question.simulators.length > 0) {
       for (const simulator of question.simulators) {
         await prisma.simulator.update({
-          where: { id: simulator.id },
-          data: { number_of_questions: { increment: 1 } },
+          where: {id: simulator.id},
+          data: {number_of_questions: {increment: 1}},
         });
       }
     }
 
     const imageTitles = [
-      ...getImageTitles(question.content).map(title => ({ type: 'questions', title })),
-      ...getImageTitles(question.justification).map(title => ({ type: 'justifications', title })),
-      ...question.options.flatMap(option => getImageTitles(option.content).map(title => ({ type: 'options', title })))
+      ...getImageTitles(question.content).map(title => ({type: 'questions', title})),
+      ...getImageTitles(question.justification).map(title => ({type: 'justifications', title})),
+      ...question.options.flatMap(option => getImageTitles(option.content).map(title => ({type: 'options', title})))
     ].filter(image => image.title !== null);
 
-    await Promise.all(imageTitles.map(async ({ type, title }) => {
+    await Promise.all(imageTitles.map(async ({type, title}) => {
       if (title) {
         await prisma.imagen.create({
           data: {
@@ -77,7 +67,90 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     return {
       id: newQuestion.id,
       categoryId: newQuestion.categoryId || undefined,
-      simulators: newQuestion.simulators.map(sim => ({ id: sim.id })),
+      simulators: newQuestion.simulators.map(sim => ({id: sim.id})),
+    };
+  } catch (error) {
+    return handleErrors(error);
+  }
+};
+
+const updateQuestionService = async (questionId: number, updatedQuestion: QuestionCreate): Promise<QuestionCreateResponse | ErrorMessage> => {
+  try {
+
+    const existingQuestion = await prisma.question.findUnique({
+      where: {id: questionId},
+      include: {
+        options: true,
+        simulators: true,
+        justification: true,
+        images: true,
+      },
+    });
+
+    if (!existingQuestion) {
+      return {error: 'Question not found', code: 404};
+    }
+
+    const updatedQuestionData = await prisma.question.update({
+      where: {id: questionId},
+      data: {
+        content: updatedQuestion.content,
+        justification: {
+          update: {
+            content: updatedQuestion.justification
+          }
+        },
+        options: {
+          deleteMany: {},
+          create: updatedQuestion.options.map(option => ({
+            content: option.content,
+            isCorrect: option.isCorrect,
+          })),
+        },
+        categoryId: updatedQuestion.categoryId ? Number(updatedQuestion.categoryId) : null,
+        simulators: {
+          set: updatedQuestion.simulators?.map(simulator => ({id: simulator.id})) || [],
+        },
+      },
+      include: {
+        options: true,
+        simulators: true,
+        justification: true,
+      },
+    });
+
+    const newImageTitles = [
+      ...getImageTitles(updatedQuestion.content).map(title => ({type: 'questions', title})),
+      ...getImageTitles(updatedQuestion.justification).map(title => ({type: 'justifications', title})),
+      ...updatedQuestion.options.flatMap(option => getImageTitles(option.content).map(title => ({
+        type: 'options',
+        title
+      }))),
+    ].filter(image => image.title !== null);
+
+    const existingImages = await prisma.imagen.findMany({
+      where: {questionId: questionId},
+    });
+
+    console.log(newImageTitles);
+    console.log(existingImages);
+
+    // const newImageKeys = new Set(newImageTitles.map(({type, title}) => `${type}/${title}`));
+    // const existingImageKeys = new Set(existingImages.map(img => img.key));
+
+    // Determinar las imágenes a eliminar y a crear
+    //const imagesToDelete = existingImages.filter(img => !newImageKeys.has(img.key));
+
+    // // Eliminar imágenes que ya no están en la solicitud
+    // await Promise.all(imagesToDelete.map(async img => {
+    //   await prisma.imagen.delete({where: {id: img.id}});
+    //   await deleteFromS3(img.key); // Aquí se llama a la función que elimina de S3
+    // }));
+
+    return {
+      id: updatedQuestionData.id,
+      categoryId: updatedQuestionData.categoryId || undefined,
+      simulators: updatedQuestionData.simulators.map(sim => ({id: sim.id})),
     };
   } catch (error) {
     return handleErrors(error);
@@ -117,10 +190,10 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
   }
 };
 
-const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<QuestionList>| ErrorMessage> =>{
-  try{
+const questionListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<QuestionList> | ErrorMessage> => {
+  try {
     const total = await prisma.question.count();
-    const paginationInfo = calculatePagination(page, count, total)
+    const paginationInfo = calculatePagination(page, count, total);
 
     const questionList = await prisma.question.findMany({
       skip: (page - 1) * count,
@@ -155,99 +228,11 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
   } catch (error) {
     return handleErrors(error);
   }
-}
-
-const uploadImageService = async (type: String, file: Express.Multer.File): Promise<InfoMessage | ErrorMessage> => {
-  try {
-    if (!type) {
-
-      return {error: 'The type must be specified', code: 400};
-    }
-
-    const buffer = file.buffer;
-
-    const params = {
-      Bucket: config.get('BUCKET_NAME'),
-      Key: `${type}/${file.originalname}`,
-      Body: buffer,
-      ContentType: file.mimetype,
-    };
-
-    const command = new PutObjectCommand(params);
-
-    await s3Client.send(command);
-
-    return {
-      code: 204,
-    };
-  } catch (error: any) {
-    if ('name' in error) {
-      return {error: `S3 error: ${error.message}`, code: 400};
-    }
-
-    return {error: 'An error occurred with the server', code: 500};
-  }
 };
 
-interface ImageAttrs {
-  id: string | null;
-  alt: string | null;
-  src: string;
-  name: string | null;
-  class: string | null;
-  ismap: string | null;
-  sizes: string | null;
-  style: string;
-  title: string | null;
-  width: string | null;
-  height: string | null;
-  srcset: string | null;
-  usemap: string | null;
-  loading: string | null;
-  decoding: string | null;
-  longdesc: string | null;
-  tabindex: string | null;
-  draggable: boolean;
-  'aria-label': string | null;
-  crossorigin: string | null;
-  referrerpolicy: string | null;
-  'aria-labelledby': string | null;
-  'aria-describedby': string | null;
-}
-
-interface ImageNode {
-  type: 'image';
-  attrs: ImageAttrs;
-}
-
-interface ParagraphNode {
-  type: 'paragraph';
-  attrs: {
-    textAlign: string;
-  };
-  content: Array<{ text: string; type: 'text' }>;
-}
-
-interface Document {
-  type: 'doc';
-  content: (ImageNode | ParagraphNode)[];
-}
-
-
-function getImageTitles(doc: any): (string | null)[] {
-  if (!doc || !doc.content || !Array.isArray(doc.content)) {
-    return [];
-  }
-
-  const titles: (string | null)[] = [];
-
-  doc.content.forEach((item: any) => {
-    if (item.type === 'image' && item.attrs && item.attrs.title) {
-      titles.push(item.attrs.title);
-    }
-  });
-
-  return titles;
-}
-
-export { createQuestionService, uploadImageService, questionListService, getQuestionByIdService };
+export {
+  createQuestionService,
+  updateQuestionService,
+  questionListService,
+  getQuestionByIdService
+};
