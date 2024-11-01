@@ -43,3 +43,8 @@ export interface QuestionGet extends Question {
   categoryName?: string;
   options: object;
 }
+
+export interface QuestionGet extends Question {
+  categoryName?: string;
+  options:object;
+}
