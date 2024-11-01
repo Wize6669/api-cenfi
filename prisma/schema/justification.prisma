@@ -1,0 +1,6 @@
+model Justification {
+    id         Int      @id @default(autoincrement())
+    content    Json?
+    question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    questionId Int      @unique
+}

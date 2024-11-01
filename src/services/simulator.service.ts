@@ -86,7 +86,8 @@ const createSimulatorService = async (
       include: {
         questions: {
           include: {
-            options: true
+            options: true,
+            justification: true,
           }
         }
       }
@@ -201,7 +202,8 @@ const updateSimulatorService = async (
       include: {
         questions: {
           include: {
-            options: true
+            options: true,
+            justification: true,
           }
         }
       }
@@ -211,7 +213,7 @@ const updateSimulatorService = async (
     const formattedQuestions: QuestionCreate[] = updatedSimulator.questions.map(question => ({
       id: question.id,
       content: question.content as Object,
-      justification: question.justification as Object,
+      justification: question?.justification || undefined,
       options: question.options.map(opt => ({
         id: opt.id,
         content: opt.content as Object,
@@ -253,7 +255,8 @@ const simulatorListService = async (
         questions: {
           include: {
             options: true,
-            category: true
+            category: true,
+            justification: true,
           }
         }
       },
@@ -314,7 +317,8 @@ const getSimulatorByIdService = async (
         questions: {
           include: {
             category: true,
-            options: true
+            options: true,
+            justification: true,
           }
         }
       }

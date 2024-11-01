@@ -8,7 +8,6 @@ export interface Question {
   simulators?: SimulatorId[]; // Relación many-to-many con simuladores
 }
 
-
 export interface QuestionCreate {
   id?: number;
   content: object;
@@ -18,13 +17,11 @@ export interface QuestionCreate {
   simulators?: SimulatorId[];  // Relación many-to-many con simuladores
 }
 
-
 export interface Option {
   id: number;
   content: object;
   isCorrect: boolean;
 }
-
 
 export interface OptionForm extends Omit<Option, 'id'> {
 }
@@ -39,5 +36,10 @@ export interface QuestionList extends Question {
 
 export interface QuestionGet extends Question {
   categoryName?: string;
-  options:object;
+  options: object;
+}
+
+export interface QuestionGet extends Question {
+  categoryName?: string;
+  options: object;
 }

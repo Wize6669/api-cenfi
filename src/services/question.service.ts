@@ -23,7 +23,11 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     const newQuestion = await prisma.question.create({
       data: {
         content: question.content,
-        justification: question.justification,
+        justification: {
+          create: {
+            content: question.justification
+          }
+        },
         options: {
           create: question.options.map((option) => ({
             content: option.content,
@@ -38,6 +42,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
       include: {
         options: true,
         simulators: true,
+        justification: true,
       },
     });
 
@@ -50,6 +55,25 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
       }
     }
 
+    const imageTitles = [
+      ...getImageTitles(question.content).map(title => ({ type: 'questions', title })),
+      ...getImageTitles(question.justification).map(title => ({ type: 'justifications', title })),
+      ...question.options.flatMap(option => getImageTitles(option.content).map(title => ({ type: 'options', title })))
+    ].filter(image => image.title !== null);
+
+    await Promise.all(imageTitles.map(async ({ type, title }) => {
+      if (title) {
+        await prisma.imagen.create({
+          data: {
+            name: title,
+            key: `${type}/${title}`,
+            entityType: type, // question, option, justification
+            questionId: newQuestion.id,
+          },
+        });
+      }
+    }));
+
     return {
       id: newQuestion.id,
       categoryId: newQuestion.categoryId || undefined,
@@ -59,8 +83,6 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     return handleErrors(error);
   }
 };
-
-
 
 const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet | ErrorMessage> => {
   try {
@@ -72,6 +94,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
         options: true,
         category: true,
         simulators: true,
+        justification: true,
       },
     });
 
@@ -81,15 +104,11 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
 
     return {
       content: existingQuestion.content as Object,
-      justification: existingQuestion.justification as Object | undefined,
+      justification: existingQuestion?.justification as Object | undefined,
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
-      options: existingQuestion.options.map(opt => ({
-        id: opt.id,
-        content: opt.content as Object,
-        isCorrect: opt.isCorrect
-      })),
+      options: existingQuestion.options,
     };
 
   } catch (error) {
@@ -109,13 +128,14 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
         options: true,
         category: true,
         simulators: true,
+        justification: true,
       },
     });
 
     const data = questionList.map(question => ({
       id: question.id,
       content: question.content as Object,
-      justification: question.justification as Object | undefined,
+      justification: question?.justification as Object | undefined,
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
       simulators: question.simulators.map(sim => ({ id: sim.id })),
@@ -166,5 +186,62 @@ const uploadImageService = async (type: String, file: Express.Multer.File): Prom
     return {error: 'An error occurred with the server', code: 500};
   }
 };
+
+interface ImageAttrs {
+  id: string | null;
+  alt: string | null;
+  src: string;
+  name: string | null;
+  class: string | null;
+  ismap: string | null;
+  sizes: string | null;
+  style: string;
+  title: string | null;
+  width: string | null;
+  height: string | null;
+  srcset: string | null;
+  usemap: string | null;
+  loading: string | null;
+  decoding: string | null;
+  longdesc: string | null;
+  tabindex: string | null;
+  draggable: boolean;
+  'aria-label': string | null;
+  crossorigin: string | null;
+  referrerpolicy: string | null;
+  'aria-labelledby': string | null;
+  'aria-describedby': string | null;
+}
+
+interface ImageNode {
+  type: 'image';
+  attrs: ImageAttrs;
+}
+
+interface ParagraphNode {
+  type: 'paragraph';
+  attrs: {
+    textAlign: string;
+  };
+  content: Array<{ text: string; type: 'text' }>;
+}
+
+interface Document {
+  type: 'doc';
+  content: (ImageNode | ParagraphNode)[];
+}
+
+
+function getImageTitles(doc) {
+  const titles: (string | null)[] = [];
+
+  doc.content.forEach((item) => {
+    if (item.type === 'image' && item.attrs && item.attrs.title) {
+      titles.push(item.attrs.title);
+    }
+  });
+
+  return titles;
+}
 
 export { createQuestionService, uploadImageService, questionListService, getQuestionByIdService };

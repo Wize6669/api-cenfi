@@ -1,0 +1,10 @@
+model Imagen {
+    id         Int      @id @default(autoincrement())
+    name       String
+    key        String
+    entityType String // "question", "option", "justification"
+    question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+    questionId Int
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+}
