@@ -77,6 +77,7 @@ const createSimulatorService = async (
         visibility: simulatorData.visibility,
         navigate: simulatorData.navigate,
         review: simulatorData.review,
+        durationReview: simulatorData.durationReview,
         number_of_questions: selectedQuestionIds.length,
         questions: {
           connect: selectedQuestionIds.map(id => ({ id }))
@@ -112,6 +113,7 @@ const createSimulatorService = async (
       visibility: newSimulator.visibility,
       navigate: newSimulator.navigate,
       review: newSimulator.review,
+      durationReview: newSimulator.durationReview,
       number_of_questions: newSimulator.number_of_questions,
       questions: formattedQuestions
     };
@@ -148,12 +150,12 @@ const updateSimulatorService = async (
           WHERE "categoryId" = ${categoryQuestion.categoryId}
         `;
 
-        if (count < categoryQuestion.numberOfQuestions) {
-          return {
-            error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
-            code: 400
-          };
-        }
+          if (count < categoryQuestion.numberOfQuestions) {
+            return {
+              error: `La categoría tiene ${count} preguntas disponibles, pero se están solicitando ${categoryQuestion.numberOfQuestions} preguntas`,
+              code: 400
+            };
+          }
       }
     }
 
@@ -189,6 +191,7 @@ const updateSimulatorService = async (
         navigate: updateSimulator.navigate,
         visibility: updateSimulator.visibility,
         review: updateSimulator.review,
+        durationReview: updateSimulator.durationReview,
         number_of_questions: selectedQuestionIds.length || existingSimulator.questions.length,
         questions: selectedQuestionIds.length > 0 ? {
           set: [],
@@ -225,6 +228,7 @@ const updateSimulatorService = async (
       visibility: updatedSimulator.visibility,
       navigate: updatedSimulator.navigate,
       review: updatedSimulator.review,
+      durationReview: updatedSimulator.durationReview,
       number_of_questions: updatedSimulator.number_of_questions,
       questions: formattedQuestions
     };
@@ -282,6 +286,7 @@ const simulatorListService = async (
         navigate: simulator.navigate,
         visibility: simulator.visibility,
         review: simulator.review,
+        durationReview: simulator.durationReview,
         number_of_questions: simulator.number_of_questions,
         questions: formattedQuestions
       };
@@ -355,11 +360,12 @@ const getSimulatorByIdService = async (
     return {
       id: existingSimulator.id,
       name: existingSimulator.name,
-      password: existingSimulator.password, // Incluimos la contraseña hasheada
+      password: existingSimulator.password,
       duration: existingSimulator.duration,
       navigate: existingSimulator.navigate,
       visibility: existingSimulator.visibility,
       review: existingSimulator.review,
+      durationReview: existingSimulator.durationReview,
       number_of_questions: existingSimulator.number_of_questions,
       questions: formattedQuestions,
       categoryQuestions: categoryQuestionsArray

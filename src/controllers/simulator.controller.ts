@@ -7,13 +7,14 @@ import {
 } from "../services/simulator.service";
 
 const createSimulatorController = async (req: Request, res: Response) => {
-  const {name, password, duration, navigate, review, visibility, categoryQuestions} = req.body;
+  const {name, password, duration, navigate, review, durationReview, visibility, categoryQuestions} = req.body;
   const result = await createSimulatorService({
     name,
     password,
     duration,
     navigate,
     review,
+    durationReview,
     visibility,
     categoryQuestions: categoryQuestions || []
   })
@@ -26,7 +27,7 @@ const createSimulatorController = async (req: Request, res: Response) => {
 
 const updateSimulatorController = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, duration, navigate, review, visibility, categoryQuestions } = req.body;
+  const { name, duration, navigate, review, durationReview,visibility, categoryQuestions } = req.body;
   const result = await updateSimulatorService({
     id,
     name,
@@ -34,6 +35,7 @@ const updateSimulatorController = async (req: Request, res: Response) => {
     navigate,
     review,
     visibility,
+    durationReview,
     categoryQuestions: categoryQuestions || undefined
   })
 

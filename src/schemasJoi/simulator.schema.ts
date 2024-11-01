@@ -45,6 +45,11 @@ const createSimulatorSchema = Joi.object({
       'any.required': 'El campo de revisión es obligatorio.',
     }),
 
+  durationReview: Joi.number().integer().required().messages({
+    'number.base':'El valor debe ser un número entero.',
+    'any.required':'El campo de duración es obligatorio.',
+  }),
+
   visibility: Joi.boolean()
     .required()
     .messages({
@@ -83,6 +88,7 @@ const updateSimulatorSchema = Joi.object({
   navigate: Joi.boolean().optional(),
   review: Joi.boolean().optional(),
   visibility: Joi.boolean().optional(),
+  durationReview: Joi.number().integer().optional(),
   categoryQuestions: Joi.array()
     .items(Joi.object({
       categoryId: Joi.number().integer().required(),

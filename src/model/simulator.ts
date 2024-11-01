@@ -12,6 +12,7 @@ export interface Simulator {
   navigate: boolean;
   visibility: boolean;
   review: boolean;
+  durationReview: number;
   number_of_questions: number;
   questions?: Question[];
 }
@@ -33,6 +34,7 @@ export interface SimulatorRequest {
   navigate: boolean;
   visibility: boolean;
   review: boolean;
+  durationReview?: number;
   categoryQuestions: CategoryQuestions[];
 }
 
@@ -43,6 +45,7 @@ export interface SimulatorResponse {
   visibility: boolean;
   navigate: boolean;
   review: boolean;
+  durationReview: number;
   number_of_questions: number;
   questions?: QuestionCreate[];
 }
@@ -54,6 +57,7 @@ export interface SimulatorUpdate {
   navigate: boolean;
   visibility: boolean;
   review: boolean;
+  durationReview: number;
   categoryQuestions?: CategoryQuestions[];
 }
 

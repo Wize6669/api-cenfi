@@ -36,6 +36,7 @@ const singInSimulatorService = async (simulatorId: string, password: string): Pr
       navigate: simulator.navigate,
       visibility: simulator.visibility,
       review: simulator.review,
+      durationReview: simulator.durationReview,
       number_of_questions: simulator.number_of_questions,
     };
 
