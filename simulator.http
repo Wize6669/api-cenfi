@@ -33,7 +33,7 @@ Content-Type: application/json
 
 ###
 ### Obtener un simulador por ID
-GET http://localhost:3001/api/v1/simulators/c17105b4-ca47-4f40-8d5d-a5788f5e12bd
+GET http://localhost:3001/api/v1/simulators/36c25470-37a1-428f-b04f-f038efe866e5
 Content-Type: application/json
 
 ###

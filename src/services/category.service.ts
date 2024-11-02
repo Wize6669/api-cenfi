@@ -21,12 +21,14 @@ const createCategoryService = async (category: Category): Promise<Category | Err
     const newCategory = await prisma.category.create({
       data: {
         name: category.name,
+        superCategoryId: category.superCategoryId
       }
     });
 
     return {
       id: category.id,
       name: newCategory.name,
+      superCategoryId: newCategory.superCategoryId
     };
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -56,12 +58,14 @@ const updateCategoryService = async (updateCategory: Category): Promise<Category
       },
       data:{
         name: updateCategory.name,
+        superCategoryId: updateCategory.superCategoryId
       }
     });
 
     return {
       id: category.id,
       name: category.name,
+      superCategoryId: category.superCategoryId
     };
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -119,6 +123,7 @@ const categoryListService = async (page: number = 1, count: number = 5): Promise
       select: {
         id: true,
         name: true,
+        superCategoryId: true,
         _count: {
           select: { questions: true }
         }
@@ -131,15 +136,14 @@ const categoryListService = async (page: number = 1, count: number = 5): Promise
     const data = categoryList.map(category => ({
       id: category.id,
       name: category.name,
+      superCategoryId: category.superCategoryId,
       questionCount: category._count.questions
     }));
 
-    const result: PaginationResponse<CategoryList> = {
+    return {
       ...paginationInfo,
       data,
     };
-
-    return result;
 
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -171,6 +175,7 @@ const getCategoryByIdService = async (categoryId: number): Promise<CategoryList 
 
     return {
       name: existingCategory.name,
+      superCategoryId: existingCategory.superCategoryId,
       questionCount: existingCategory._count.questions
     };
   } catch (error) {

@@ -316,7 +316,11 @@ const getSimulatorByIdService = async (
       include: {
         questions: {
           include: {
-            category: true,
+            category: {
+              include: {
+                superCategory: true
+              }
+            },
             options: true,
             justification: true,
           }
@@ -337,6 +341,11 @@ const getSimulatorByIdService = async (
       category: question.category ? {
         id: question.category.id,
         name: question.category.name,
+        superCategoryId: question.category.superCategoryId,
+        superCategory: question.category.superCategory ? {
+          id: question.category.superCategory.id,
+          name: question.category.superCategory.name
+        } : undefined
       } : undefined,
       options: question.options.map(option => ({
         id: option.id,

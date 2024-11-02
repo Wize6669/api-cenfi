@@ -107,6 +107,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
       justification: existingQuestion?.justification as Object | undefined,
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
+      superCategoryId: existingQuestion.category?.superCategoryId ?? undefined,
       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
       options: existingQuestion.options,
     };
@@ -138,6 +139,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       justification: question?.justification as Object | undefined,
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
+      superCategoryId: question.category?.superCategoryId ?? undefined,
       simulators: question.simulators.map(sim => ({ id: sim.id })),
       options: question.options.map(opt => ({
         id: opt.id,
@@ -232,10 +234,14 @@ interface Document {
 }
 
 
-function getImageTitles(doc) {
+function getImageTitles(doc: any): (string | null)[] {
+  if (!doc || !doc.content || !Array.isArray(doc.content)) {
+    return [];
+  }
+
   const titles: (string | null)[] = [];
 
-  doc.content.forEach((item) => {
+  doc.content.forEach((item: any) => {
     if (item.type === 'image' && item.attrs && item.attrs.title) {
       titles.push(item.attrs.title);
     }

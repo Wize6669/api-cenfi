@@ -31,11 +31,13 @@ export interface QuestionCreateResponse extends Pick<Question, 'id' | 'categoryI
 
 export interface QuestionList extends Question {
   categoryName?: string;
+  superCategoryId?: number;
   options?: Option[];
 }
 
 export interface QuestionGet extends Question {
   categoryName?: string;
+  superCategoryId?: number;
   options: object;
 }
 
