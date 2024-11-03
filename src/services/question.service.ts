@@ -4,7 +4,7 @@ import { ErrorMessage, InfoMessage } from '../model/messages';
 import { handleErrors } from '../utils/handles';
 import { PaginationResponse } from '../model/pagination';
 import { calculatePagination } from '../utils/pagination.util';
-import { getImageTitles, uploadImageService, deleteImagesService } from './image.service';
+import { getImageTitles, deleteImagesService } from './image.service';
 
 const prisma = new PrismaClient();
 
@@ -76,7 +76,6 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
 
 const updateQuestionService = async (questionId: number, updatedQuestion: QuestionCreate): Promise<QuestionCreateResponse | ErrorMessage> => {
   try {
-
     const existingQuestion = await prisma.question.findUnique({
       where: {id: questionId},
       include: {
@@ -128,24 +127,30 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
       }))),
     ].filter(image => image.title !== null);
 
-    const existingImages = await prisma.imagen.findMany({
+    const existingImages = (await prisma.imagen.findMany({
       where: {questionId: questionId},
-    });
+      select: {
+        id: true,
+        entityType: true,
+        name: true,
+        key: true,
+        questionId: true
+      },
+    })).map(image => ({
+      id: image.id,
+      type: image.entityType,
+      name: image.name,
+      key: image.key,
+      questionId: image.questionId
+    }));
 
-    console.log(newImageTitles);
-    console.log(existingImages);
+    const newSet = new Set(newImageTitles.map(img => `${img.type}/${img.title}`));
 
-    // const newImageKeys = new Set(newImageTitles.map(({type, title}) => `${type}/${title}`));
-    // const existingImageKeys = new Set(existingImages.map(img => img.key));
+    const imagesToDelete = existingImages
+      .filter(img => !newSet.has(`${img.type}/${img.name}`))
+      .map(({ id, key, questionId }) => ({ id, key, questionId }));
 
-    // Determinar las imágenes a eliminar y a crear
-    //const imagesToDelete = existingImages.filter(img => !newImageKeys.has(img.key));
-
-    // // Eliminar imágenes que ya no están en la solicitud
-    // await Promise.all(imagesToDelete.map(async img => {
-    //   await prisma.imagen.delete({where: {id: img.id}});
-    //   await deleteFromS3(img.key); // Aquí se llama a la función que elimina de S3
-    // }));
+    await deleteImagesService(imagesToDelete)
 
     return {
       id: updatedQuestionData.id,
@@ -172,7 +177,8 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
     });
 
     if (!existingQuestion) {
-      return { error: 'Question not found', code: 404 };
+
+      return {error: 'Question not found', code: 404};
     }
 
     return {
@@ -181,11 +187,12 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       superCategoryId: existingQuestion.category?.superCategoryId ?? undefined,
-      simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
+      simulators: existingQuestion.simulators.map(sim => ({id: sim.id})),
       options: existingQuestion.options,
     };
 
   } catch (error) {
+
     return handleErrors(error);
   }
 };
@@ -213,7 +220,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
       superCategoryId: question.category?.superCategoryId ?? undefined,
-      simulators: question.simulators.map(sim => ({ id: sim.id })),
+      simulators: question.simulators.map(sim => ({id: sim.id})),
       options: question.options.map(opt => ({
         id: opt.id,
         content: opt.content as Object,
@@ -226,6 +233,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       data,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
 };

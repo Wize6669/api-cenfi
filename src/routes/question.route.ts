@@ -13,7 +13,7 @@ import { questionSchemaParams } from '../schemasJoi/question.schema';
 const router = Router();
 
 router.post('/', createQuestionController);
-// router.put('/', up);
+router.put('/:id', updateQuestionController);
 router.get('/', [schemaVerifierMiddleware({query: paginationSchema})], listQuestionsController);
 router.get('/:id', [schemaVerifierMiddleware({params: questionSchemaParams})], getQuestionByIdController);
 

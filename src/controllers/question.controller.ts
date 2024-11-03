@@ -17,6 +17,7 @@ const createQuestionController = async (req: Request, res: Response) => {
   });
 
   if ('error' in result) {
+
     return res.status(result.code).json({message: result.error});
   }
 
@@ -25,20 +26,34 @@ const createQuestionController = async (req: Request, res: Response) => {
 
 const updateQuestionController = async (req: Request, res: Response) => {
   const {id} = req.params;
+  const numericId = parseInt(id);
   const {categoryId, question, justification, options} = req.body;
 
-  // const result = await updateQues
+  const result = await updateQuestionService(numericId, {
+    content: question,
+    justification,
+    options,
+    categoryId,
+  });
 
+  if ('error' in result) {
+
+    return res.status(result.code).json({message: result.error});
+  }
+
+  res.status(200).json({message: 'Category created successfully.'});
 };
 
 const getQuestionByIdController = async (req: Request, res: Response) => {
   const {id} = req.params;
   const numericId = parseInt(id, 10);
-
   const result = await getQuestionByIdService(numericId);
+
   if ('error' in result) {
+
     return res.status(result.code).json({message: result.error});
   }
+
   res.status(200).json(result);
 };
 
@@ -48,9 +63,11 @@ const listQuestionsController = async (req: Request, res: Response) => {
   const countAux = Number(count);
   const result = await questionListService(pageAux, countAux);
   if ('error' in result) {
+
     return res.status(result.code).json({message: result.error});
   }
-  res.status(200).json(result);
+
+  return res.status(200).json(result);
 };
 
 export {
