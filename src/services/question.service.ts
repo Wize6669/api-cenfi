@@ -171,6 +171,7 @@ const deleteQuestionService = async (questionId: number): Promise<InfoMessage | 
         justification: true,
         options: true,
         images: true,
+        simulators: true,
       },
     });
 
@@ -184,7 +185,6 @@ const deleteQuestionService = async (questionId: number): Promise<InfoMessage | 
       questionId: questionId,
     }));
 
-
     if (imagesToDelete.length > 0) {
       const deleteImagesResult = await deleteImagesService(imagesToDelete);
       if ('error' in deleteImagesResult) {
@@ -196,6 +196,14 @@ const deleteQuestionService = async (questionId: number): Promise<InfoMessage | 
     await prisma.option.deleteMany({ where: { questionId } });
     if (existingQuestion.justification) {
       await prisma.justification.delete({ where: { id: existingQuestion.justification.id } });
+    }
+
+    // Actualizar el contador de preguntas en los simuladores asociados
+    for (const simulator of existingQuestion.simulators) {
+      await prisma.simulator.update({
+        where: { id: simulator.id },
+        data: { number_of_questions: { decrement: 1 } },
+      });
     }
 
     // Eliminar la pregunta
