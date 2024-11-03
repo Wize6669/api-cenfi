@@ -161,8 +161,6 @@ const changePasswordService = async (id:string, temporaryPassword: string, newPa
         },
       });
 
-      console.log(!existingUser)
-
       if(!existingUser) {
 
         return { error: 'User not found', code: 404 };

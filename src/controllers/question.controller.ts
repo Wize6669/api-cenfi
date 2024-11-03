@@ -3,7 +3,7 @@ import {
   createQuestionService,
   updateQuestionService,
   getQuestionByIdService,
-  questionListService,
+  questionListService, deleteQuestionService,
 } from '../services/question.service';
 
 const createQuestionController = async (req: Request, res: Response) => {
@@ -44,6 +44,19 @@ const updateQuestionController = async (req: Request, res: Response) => {
   res.status(200).json({message: 'Category created successfully.'});
 };
 
+const deleteQuestionController = async (req: Request, res: Response)  => {
+  const {id} = req.params;
+  const numericId = parseInt(id, 10);
+  const result = await deleteQuestionService(numericId);
+
+  if ('error' in result) {
+
+    return res.status(result.code).json({message: result.error});
+  }
+
+  return res.status(result.code).send('');
+}
+
 const getQuestionByIdController = async (req: Request, res: Response) => {
   const {id} = req.params;
   const numericId = parseInt(id, 10);
@@ -73,6 +86,7 @@ const listQuestionsController = async (req: Request, res: Response) => {
 export {
   createQuestionController,
   updateQuestionController,
+  deleteQuestionController,
   listQuestionsController,
   getQuestionByIdController
 };

@@ -26,7 +26,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
         },
         categoryId: question.categoryId ? Number(question.categoryId) : null,
         simulators: question.simulators && question.simulators.length > 0
-          ? {connect: question.simulators.map((simulator) => ({id: simulator.id}))}
+          ? { connect: question.simulators.map((simulator) => ({ id: simulator.id })) }
           : undefined,
       },
       include: {
@@ -39,19 +39,19 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     if (question.simulators && question.simulators.length > 0) {
       for (const simulator of question.simulators) {
         await prisma.simulator.update({
-          where: {id: simulator.id},
-          data: {number_of_questions: {increment: 1}},
+          where: { id: simulator.id },
+          data: { number_of_questions: { increment: 1 } },
         });
       }
     }
 
     const imageTitles = [
-      ...getImageTitles(question.content).map(title => ({type: 'questions', title})),
-      ...getImageTitles(question.justification).map(title => ({type: 'justifications', title})),
-      ...question.options.flatMap(option => getImageTitles(option.content).map(title => ({type: 'options', title})))
+      ...getImageTitles(question.content).map(title => ({ type: 'questions', title })),
+      ...getImageTitles(question.justification).map(title => ({ type: 'justifications', title })),
+      ...question.options.flatMap(option => getImageTitles(option.content).map(title => ({ type: 'options', title })))
     ].filter(image => image.title !== null);
 
-    await Promise.all(imageTitles.map(async ({type, title}) => {
+    await Promise.all(imageTitles.map(async ({ type, title }) => {
       if (title) {
         await prisma.imagen.create({
           data: {
@@ -67,7 +67,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
     return {
       id: newQuestion.id,
       categoryId: newQuestion.categoryId || undefined,
-      simulators: newQuestion.simulators.map(sim => ({id: sim.id})),
+      simulators: newQuestion.simulators.map(sim => ({ id: sim.id })),
     };
   } catch (error) {
     return handleErrors(error);
@@ -77,7 +77,7 @@ const createQuestionService = async (question: QuestionCreate): Promise<Question
 const updateQuestionService = async (questionId: number, updatedQuestion: QuestionCreate): Promise<QuestionCreateResponse | ErrorMessage> => {
   try {
     const existingQuestion = await prisma.question.findUnique({
-      where: {id: questionId},
+      where: { id: questionId },
       include: {
         options: true,
         simulators: true,
@@ -87,11 +87,11 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
     });
 
     if (!existingQuestion) {
-      return {error: 'Question not found', code: 404};
+      return { error: 'Question not found', code: 404 };
     }
 
     const updatedQuestionData = await prisma.question.update({
-      where: {id: questionId},
+      where: { id: questionId },
       data: {
         content: updatedQuestion.content,
         justification: {
@@ -108,7 +108,7 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
         },
         categoryId: updatedQuestion.categoryId ? Number(updatedQuestion.categoryId) : null,
         simulators: {
-          set: updatedQuestion.simulators?.map(simulator => ({id: simulator.id})) || [],
+          set: updatedQuestion.simulators?.map(simulator => ({ id: simulator.id })) || [],
         },
       },
       include: {
@@ -119,8 +119,8 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
     });
 
     const newImageTitles = [
-      ...getImageTitles(updatedQuestion.content).map(title => ({type: 'questions', title})),
-      ...getImageTitles(updatedQuestion.justification).map(title => ({type: 'justifications', title})),
+      ...getImageTitles(updatedQuestion.content).map(title => ({ type: 'questions', title })),
+      ...getImageTitles(updatedQuestion.justification).map(title => ({ type: 'justifications', title })),
       ...updatedQuestion.options.flatMap(option => getImageTitles(option.content).map(title => ({
         type: 'options',
         title
@@ -128,7 +128,7 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
     ].filter(image => image.title !== null);
 
     const existingImages = (await prisma.imagen.findMany({
-      where: {questionId: questionId},
+      where: { questionId: questionId },
       select: {
         id: true,
         entityType: true,
@@ -150,17 +150,63 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
       .filter(img => !newSet.has(`${img.type}/${img.name}`))
       .map(({ id, key, questionId }) => ({ id, key, questionId }));
 
-    await deleteImagesService(imagesToDelete)
+    await deleteImagesService(imagesToDelete);
 
     return {
       id: updatedQuestionData.id,
       categoryId: updatedQuestionData.categoryId || undefined,
-      simulators: updatedQuestionData.simulators.map(sim => ({id: sim.id})),
+      simulators: updatedQuestionData.simulators.map(sim => ({ id: sim.id })),
     };
+  } catch (error) {
+
+    return handleErrors(error);
+  }
+};
+
+const deleteQuestionService = async (questionId: number): Promise<InfoMessage | ErrorMessage> => {
+  try {
+    const existingQuestion = await prisma.question.findUnique({
+      where: { id: questionId },
+      include: {
+        justification: true,
+        options: true,
+        images: true,
+      },
+    });
+
+    if (!existingQuestion) {
+      return { error: 'Question not found', code: 404 };
+    }
+
+    const imagesToDelete = existingQuestion.images.map((image) => ({
+      id: image.id,
+      key: image.key,
+      questionId: questionId,
+    }));
+
+
+    if (imagesToDelete.length > 0) {
+      const deleteImagesResult = await deleteImagesService(imagesToDelete);
+      if ('error' in deleteImagesResult) {
+        return deleteImagesResult;
+      }
+    }
+
+    // Eliminar opciones y justificación
+    await prisma.option.deleteMany({ where: { questionId } });
+    if (existingQuestion.justification) {
+      await prisma.justification.delete({ where: { id: existingQuestion.justification.id } });
+    }
+
+    // Eliminar la pregunta
+    await prisma.question.delete({ where: { id: questionId } });
+
+    return { code: 204 };
   } catch (error) {
     return handleErrors(error);
   }
 };
+
 
 const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet | ErrorMessage> => {
   try {
@@ -178,7 +224,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
 
     if (!existingQuestion) {
 
-      return {error: 'Question not found', code: 404};
+      return { error: 'Question not found', code: 404 };
     }
 
     return {
@@ -187,7 +233,7 @@ const getQuestionByIdService = async (questionsId: number): Promise<QuestionGet 
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       superCategoryId: existingQuestion.category?.superCategoryId ?? undefined,
-      simulators: existingQuestion.simulators.map(sim => ({id: sim.id})),
+      simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
       options: existingQuestion.options,
     };
 
@@ -220,7 +266,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
       categoryId: question.categoryId ?? undefined,
       categoryName: question.category?.name ?? undefined,
       superCategoryId: question.category?.superCategoryId ?? undefined,
-      simulators: question.simulators.map(sim => ({id: sim.id})),
+      simulators: question.simulators.map(sim => ({ id: sim.id })),
       options: question.options.map(opt => ({
         id: opt.id,
         content: opt.content as Object,
@@ -241,6 +287,7 @@ const questionListService = async (page: number = 1, count: number = 5): Promise
 export {
   createQuestionService,
   updateQuestionService,
+  deleteQuestionService,
   questionListService,
   getQuestionByIdService
 };

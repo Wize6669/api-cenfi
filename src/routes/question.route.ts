@@ -3,7 +3,7 @@ import {
   createQuestionController,
   updateQuestionController,
   getQuestionByIdController,
-  listQuestionsController,
+  listQuestionsController, deleteQuestionController,
 } from '../controllers/question.controller';
 
 import { paginationSchema } from '../schemasJoi/pagination.schema';
@@ -14,6 +14,7 @@ const router = Router();
 
 router.post('/', createQuestionController);
 router.put('/:id', updateQuestionController);
+router.delete('/:id', deleteQuestionController);
 router.get('/', [schemaVerifierMiddleware({query: paginationSchema})], listQuestionsController);
 router.get('/:id', [schemaVerifierMiddleware({params: questionSchemaParams})], getQuestionByIdController);
 
