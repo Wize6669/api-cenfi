@@ -41,7 +41,7 @@ const updateQuestionController = async (req: Request, res: Response) => {
     return res.status(result.code).json({message: result.error});
   }
 
-  res.status(200).json({message: 'Category created successfully.'});
+  res.status(200).json({message: 'Category updated successfully.'});
 };
 
 const deleteQuestionController = async (req: Request, res: Response)  => {

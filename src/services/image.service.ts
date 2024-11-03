@@ -1,12 +1,23 @@
 import { ErrorMessage, InfoMessage } from '../model/messages';
 import { config } from '../config';
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { PrismaClient } from '@prisma/client';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 interface PropsImage {
   id: number;
   key: string;
   questionId: number;
+}
+
+interface ImageData {
+  name: string;
+  key: string;
+}
+
+export interface SignedUrlResponse {
+  name: string;
+  signedUrl: string;
 }
 
 const prisma = new PrismaClient();
@@ -103,4 +114,26 @@ function getImageTitles(doc) {
   return titles;
 }
 
-export { getImageTitles, uploadImageService, deleteImagesService };
+const getImageSignedUrlsService = async (images: ImageData[]): Promise<SignedUrlResponse[] | ErrorMessage> => {
+  try {
+    return await Promise.all(
+      images.map(async (image) => {
+        const params = {
+          Bucket: config.get('BUCKET_NAME'),
+          Key: image.key,
+        };
+        const command = new GetObjectCommand(params);
+        const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 5400 });
+
+        return {
+          name: image.name,
+          signedUrl,
+        };
+      })
+    );
+  } catch (error: any) {
+    return { error: 'An error occurred generating signed URLs', code: 500 };
+  }
+};
+
+export { getImageTitles, uploadImageService, deleteImagesService, getImageSignedUrlsService };
