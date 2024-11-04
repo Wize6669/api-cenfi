@@ -90,6 +90,13 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
       return { error: 'Question not found', code: 404 };
     }
 
+    // Mantener las asociaciones existentes con simuladores
+    const existingSimulatorIds = existingQuestion.simulators.map(sim => sim.id);
+    const updatedSimulatorIds = updatedQuestion.simulators?.map(sim => sim.id) || [];
+
+    // Combinar los IDs de simuladores existentes y actualizados
+    const combinedSimulatorIds = [...new Set([...existingSimulatorIds, ...updatedSimulatorIds])];
+
     console.log("hys", updatedQuestion.justification);
 
     const updatedQuestionData = await prisma.question.update({
@@ -97,9 +104,10 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
       data: {
         content: updatedQuestion.content,
         justification: {
-          update: {
-            content: updatedQuestion.justification
-          }
+          upsert: {
+            create: { content: updatedQuestion.justification },
+            update: { content: updatedQuestion.justification },
+          },
         },
         options: {
           deleteMany: {},
@@ -110,7 +118,7 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
         },
         categoryId: updatedQuestion.categoryId ? Number(updatedQuestion.categoryId) : null,
         simulators: {
-          set: updatedQuestion.simulators?.map(simulator => ({ id: simulator.id })) || [],
+          set: combinedSimulatorIds.map(id => ({ id })),
         },
       },
       include: {
