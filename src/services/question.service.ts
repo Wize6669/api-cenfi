@@ -315,7 +315,9 @@ const getQuestionByIdService = async (questionId: number): Promise<QuestionGet |
     // Estructurar la respuesta con las imágenes firmadas y otros detalles
     return {
       content: updatedContent,
-      justification: updatedJustification,
+      justification: {
+        content: updatedJustification
+      },
       categoryId: existingQuestion.categoryId ?? undefined,
       categoryName: existingQuestion.category?.name ?? undefined,
       superCategoryId: existingQuestion.category?.superCategoryId ?? undefined,
