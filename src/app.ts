@@ -19,6 +19,7 @@ import { router as questionRouter } from './routes/question.route';
 import { router as imageRouter } from './routes/image.route';
 import { router as courseRouter } from './routes/course.route';
 import { router as authSimulatorRouter } from './routes/authSimulator.route';
+import { router as resultRouter } from './routes/result.route';
 
 const app = express();
 const HOST_FRONT_END = config.get('HOST_FRONT_END');
@@ -45,5 +46,6 @@ app.use('/api/v1/questions', questionRouter);
 app.use('/api/v1/images', imageRouter);
 app.use('/api/v1/courses', courseRouter);
 app.use('/api/v1/auth-simulators', authSimulatorRouter);
+app.use('/api/v1/results', resultRouter);
 
 export {app};
