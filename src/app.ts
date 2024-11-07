@@ -16,6 +16,10 @@ import { router as userRouter } from './routes/user.route';
 import { router as categoryRouter } from './routes/category.route';
 import { router as simulatorRouter } from './routes/simulator.route';
 import { router as questionRouter } from './routes/question.route';
+import { router as imageRouter } from './routes/image.route';
+import { router as courseRouter } from './routes/course.route';
+import { router as authSimulatorRouter } from './routes/authSimulator.route';
+import { router as resultRouter } from './routes/result.route';
 
 const app = express();
 const HOST_FRONT_END = config.get('HOST_FRONT_END');
@@ -36,8 +40,12 @@ app.use('/', homeHealthRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', authorizationVerifierMiddleware, adminRouter);
 app.use('/api/v1/users', jwtVerifierMiddleware, userRouter);
-app.use('/api/v1/category', categoryRouter);
-app.use('/api/v1/simulator', simulatorRouter);
+app.use('/api/v1/categories', categoryRouter);
+app.use('/api/v1/simulators', simulatorRouter);
 app.use('/api/v1/questions', questionRouter);
+app.use('/api/v1/images', imageRouter);
+app.use('/api/v1/courses', courseRouter);
+app.use('/api/v1/auth-simulators', authSimulatorRouter);
+app.use('/api/v1/results', resultRouter);
 
 export {app};

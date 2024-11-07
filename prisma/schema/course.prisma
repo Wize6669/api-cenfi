@@ -1,0 +1,15 @@
+model Course {
+    id                String   @id @default(uuid())
+    name              String
+    university        String
+    schedule          String
+    startDate         DateTime
+    endDate           DateTime
+    cost              Float
+    paymentOptions    String[]
+    syllabus          String[]
+    benefits          String[]
+    phone             String
+    inPersonSchedules String[]
+    virtualSchedules  String[]
+}

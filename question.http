@@ -1,6 +1,6 @@
 ###
 ### POST question
-POST http://localhost:3001/api/v1/question/create-question
+POST http://localhost:3001/api/v1/questions
 Content-Type: application/json
 
 {
@@ -9,3 +9,14 @@ Content-Type: application/json
     "imageName": "https://example.com/uploads/image.jpg",
     "justification": "Porque si"
 }
+###
+
+### Listar preguntas todas las preguntas
+GET http://localhost:3001/api/v1/questions?page=1&count=5
+Content-Type: application/json
+###
+
+###
+### Obtener una preguntas por ID
+GET http://localhost:3001/api/v1/questions/81
+Content-Type: application/json

@@ -1,7 +1,7 @@
 model Option {
     id         Int      @id @default(autoincrement())
-    statement  String
-    imageName  String?
+    content    Json
+    isCorrect  Boolean  @default(false) // Indica si es la opción correcta
     questionId Int
     question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade) // Se elimina si la pregunta es eliminada
 }

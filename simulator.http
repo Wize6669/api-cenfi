@@ -1,24 +1,25 @@
 ###
 ### POST simulator
-POST http://localhost:3001/api/v1/simulator/create-simulator
+POST http://localhost:3001/api/v1/simulators
 Content-Type: application/json
 
 {
-    "name": "Simulador EPN",
+    "name": "Simulador q",
     "password": "Aajifofo8$",
     "duration": 70,
     "navigate": true,
+    "review": true,
     "visibility": true
 }
 
 ###
 ### Obtener todos los simuladores
-GET http://localhost:3001/api/v1/simulator?page=1&count=5
+GET http://localhost:3001/api/v1/simulators?page=1&count=5
 Content-Type: application/json
 ###
 
 ###Actualizar un simulador
-POST http://localhost:3001/api/v1/simulator/update-simulator/5c09863e-0df1-466a-8a50-7289463f5f44
+POST http://localhost:3001/api/v1/simulators/5c09863e-0df1-466a-8a50-7289463f5f44
 Content-Type: application/json
 
 {
@@ -32,10 +33,20 @@ Content-Type: application/json
 
 ###
 ### Obtener un simulador por ID
-GET http://localhost:3001/api/v1/simulator/5c09863e-0df1-466a-8a50-7289463f5f44
+GET http://localhost:3001/api/v1/simulators/36c25470-37a1-428f-b04f-f038efe866e5
 Content-Type: application/json
 
 ###
 ### Eliminar un simulador
-DELETE http://localhost:3001/api/v1/simulator/delete-simulator/5c09863e-0df1-466a-8a50-7289463f5f44
+DELETE http://localhost:3001/api/v1/simulators/5c09863e-0df1-466a-8a50-7289463f5f44
 Content-Type: application/json
+
+###
+### Sign In simulators
+POST http://localhost:3001/api/v1/auth-simulators/sign-in-simulator
+Content-Type: application/json
+
+{
+    "simulatorId":"c5fac8b4-f930-437a-b4ca-9feedc81f4e9",
+    "password": "a@R0R|>2^SKi"
+}

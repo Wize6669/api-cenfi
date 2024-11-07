@@ -5,7 +5,8 @@ const categorySchemaParams = Joi.object({
 });
 
 const categorySchemaCreateUpdate = Joi.object({
-  name: Joi.string().min(3).max(80).required()
+  name: Joi.string().min(3).max(80).required(),
+  superCategoryId: Joi.number().optional()
 });
 
 export { categorySchemaParams, categorySchemaCreateUpdate };

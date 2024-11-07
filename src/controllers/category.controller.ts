@@ -8,8 +8,8 @@ import {
 } from "../services/category.service";
 
 const createCategoryController = async (req: Request, res: Response) => {
-  const {name} = req.body;
-  const result = await createCategoryService({name})
+  const {name, superCategoryId} = req.body;
+  const result = await createCategoryService({name, superCategoryId})
 
   if ('error' in result) {
     return res.status(result.code).json({message: result.error});
@@ -19,10 +19,10 @@ const createCategoryController = async (req: Request, res: Response) => {
 
 const updateCategoryController = async (req: Request, res: Response) => {
   const {id} = req.params;
-  const {name} = req.body;
+  const {name, superCategoryId} = req.body;
   const numericId = parseInt(id, 10);
 
-  const result = await updateCategoryService({id: numericId, name})
+  const result = await updateCategoryService({id: numericId, name, superCategoryId})
   if ('error' in result) {
     return res.status(result.code).json({message: result.error});
   }

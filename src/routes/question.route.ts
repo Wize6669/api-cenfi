@@ -1,21 +1,21 @@
-import {Router} from 'express';
-import {imageUploadMiddleware} from '../middlewares/uploadImage.middleware';
-import {createQuestionController} from '../controllers/question.controller';
-import {schemaVerifierMiddleware} from '../middlewares/schemaVerifier.middleware';
-import {questionSchema} from '../schemasJoi/question.schema';
-import multer from 'multer';
-import path from 'node:path';
+import { Router } from 'express';
+import {
+  createQuestionController,
+  updateQuestionController,
+  getQuestionByIdController,
+  listQuestionsController, deleteQuestionController,
+} from '../controllers/question.controller';
 
-const storage = multer.memoryStorage();
-const upload = multer({storage: storage});
-
-// const upload = multer({
-//   dest: path.join(__dirname, '..', 'uploads')
-// });
+import { paginationSchema } from '../schemasJoi/pagination.schema';
+import { schemaVerifierMiddleware } from '../middlewares/schemaVerifier.middleware';
+import { questionSchemaParams } from '../schemasJoi/question.schema';
 
 const router = Router();
 
-//router.post('/create-question', imageUploadMiddleware, [schemaVerifierMiddleware({body: questionSchema}), upload.single('question')], createQuestionController);
-router.post('/', [upload.single('question')], createQuestionController);
+router.post('/', createQuestionController);
+router.put('/:id', updateQuestionController);
+router.delete('/:id', deleteQuestionController);
+router.get('/', [schemaVerifierMiddleware({query: paginationSchema})], listQuestionsController);
+router.get('/:id', [schemaVerifierMiddleware({params: questionSchemaParams})], getQuestionByIdController);
 
-export {router};
+export { router };

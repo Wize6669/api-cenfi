@@ -5,6 +5,8 @@ model Simulator {
     duration            Int
     navigate            Boolean
     visibility          Boolean
-    Question            Question[]
+    review              Boolean    @default(true)
+    durationReview      Int        @default(0)
     number_of_questions Int        @default(0)
+    questions           Question[] @relation("SimulatorQuestions")
 }

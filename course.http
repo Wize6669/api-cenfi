@@ -1,0 +1,51 @@
+    ###
+### Post course
+
+POST http://localhost:3001/api/v1/courses/
+Content-Type: application/json
+
+{
+    "name": "Curso de Preparación",
+    "university": "Universidad Nacional de Loja",
+    "schedule": "Regimen Costa 2025",
+    "startDate": "2024-09-01",
+    "endDate": "2025-06-01",
+    "cost": 399.99,
+    "paymentOptions": ["Tarjeta de crédito", "Transferencia bancaria"],
+    "syllabus": ["Introducción", "Algoritmos", "Bases de datos"],
+    "benefits": ["Certificación", "Material de estudio"],
+    "phone": "1234567890",
+    "schedules": ["Lunes, martes, miercoles: 8:00 a 16:00", "Jueves, viernes, sabado: 13:00 a 18:00"]
+}
+
+###
+### Obtener todos los cursos
+GET http://localhost:3001/api/v1/courses?page=1&count=5
+Content-Type: application/json
+
+###Actualizar un curso
+POST http://localhost:3001/api/v1/courses/d6caa26f-a38e-48ef-abc0-9c68b74ca4ab
+Content-Type: application/json
+
+{
+    "name": "Curso de Preparación 1",
+    "university": "Universidad Nacional de Loja",
+    "schedule": "Regimen Costa 2025",
+    "startDate": "2024-09-01",
+    "endDate": "2025-06-01",
+    "cost": 399.99,
+    "paymentOptions": ["Tarjeta de crédito", "Transferencia bancaria"],
+    "syllabus": ["Introducción", "Algoritmos", "Bases de datos"],
+    "benefits": ["Certificación", "Material de estudio"],
+    "phone": "1234567890",
+    "schedules": ["Lunes, martes, miercoles: 8:00 a 16:00", "Jueves, viernes, sabado: 13:00 a 18:00"]
+}
+
+### Obtener un curso por ID
+
+GET http://localhost:3001/api/v1/courses/d6caa26f-a38e-48ef-abc0-9c68b74ca4ab
+Content-Type: application/json
+
+###
+###Eliminar un curso
+DELETE http://localhost:3001/api/v1/courses/d6caa26f-a38e-48ef-abc0-9c68b74ca4ab

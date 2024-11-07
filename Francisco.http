@@ -1,33 +1,35 @@
 ###
 ### POST category
-POST http://localhost:3001/api/v1/category
+POST http://localhost:3001/api/v1/categories
 Content-Type: application/json
 
 {
-    "name": "Verbal"
+    "name": "CCNN",
+    "superCategoryId": 1
 }
 
 ###
 
 ### Obtener todas las categorias
-GET http://localhost:3001/api/v1/category?page=1&count=5
+GET http://localhost:3001/api/v1/categories?page=1&count=5
 Content-Type: application/json
 ###
 
 ###Actualizar una categoria
-POST http://localhost:3001/api/v1/category/1
+POST http://localhost:3001/api/v1/categories/30
 Content-Type: application/json
 
 {
-    "name": "Matematicas"
+    "name": "Matematicas",
+    "superCategoryId": 1
 }
 
 ###
 ### Obtener una categoria por ID
-GET http://localhost:3001/api/v1/category/1
+GET http://localhost:3001/api/v1/categories/30
 Content-Type: application/json
 
 ###
 ### Eliminar una categoria
-DELETE http://localhost:3001/api/v1/category/2
+DELETE http://localhost:3001/api/v1/categories/30
 Content-Type: application/json

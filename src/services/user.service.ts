@@ -161,8 +161,6 @@ const changePasswordService = async (id:string, temporaryPassword: string, newPa
         },
       });
 
-      console.log(!existingUser)
-
       if(!existingUser) {
 
         return { error: 'User not found', code: 404 };
@@ -214,7 +212,7 @@ const changePasswordService = async (id:string, temporaryPassword: string, newPa
       return { error: `Prisma\n Field name: ${fieldName} - Message: ${error.message}`, code: 400 };
       }
 
-      return {error: 'Error occurred with the server xd', code: 500};
+      return {error: 'Error occurred with the server', code: 500};
     }
   }
 

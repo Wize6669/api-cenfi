@@ -1,5 +1,5 @@
 import {PrismaClient} from "@prisma/client";
-import {Category} from "../model/category";
+import {Category, CategoryList} from "../model/category";
 import {ErrorMessage, InfoMessage} from "../model/messages";
 import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
 import {PaginationResponse} from "../model/pagination";
@@ -21,12 +21,14 @@ const createCategoryService = async (category: Category): Promise<Category | Err
     const newCategory = await prisma.category.create({
       data: {
         name: category.name,
+        superCategoryId: category.superCategoryId
       }
     });
 
     return {
       id: category.id,
       name: newCategory.name,
+      superCategoryId: newCategory.superCategoryId
     };
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -56,12 +58,14 @@ const updateCategoryService = async (updateCategory: Category): Promise<Category
       },
       data:{
         name: updateCategory.name,
+        superCategoryId: updateCategory.superCategoryId
       }
     });
 
     return {
       id: category.id,
       name: category.name,
+      superCategoryId: category.superCategoryId
     };
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -108,7 +112,7 @@ const deleteCategoryService = async (categoryId: number): Promise<InfoMessage | 
   }
 }
 
-const categoryListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<Category> | ErrorMessage> => {
+const categoryListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<CategoryList> | ErrorMessage> => {
   try{
     const total = await prisma.category.count();
     const paginationInfo = calculatePagination(page, count, total)
@@ -119,6 +123,10 @@ const categoryListService = async (page: number = 1, count: number = 5): Promise
       select: {
         id: true,
         name: true,
+        superCategoryId: true,
+        _count: {
+          select: { questions: true }
+        }
       },
       orderBy: [
         { name: 'asc' },
@@ -128,14 +136,15 @@ const categoryListService = async (page: number = 1, count: number = 5): Promise
     const data = categoryList.map(category => ({
       id: category.id,
       name: category.name,
+      superCategoryId: category.superCategoryId,
+      questionCount: category._count.questions
     }));
 
-    const result: PaginationResponse<Category> = {
+    return {
       ...paginationInfo,
       data,
     };
 
-    return result;
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
       const fieldName = error.meta?.field_name;
@@ -147,12 +156,17 @@ const categoryListService = async (page: number = 1, count: number = 5): Promise
   }
 }
 
-const getCategoryByIdService = async (categoryId: number): Promise<Category | ErrorMessage> => {
+const getCategoryByIdService = async (categoryId: number): Promise<CategoryList | ErrorMessage> => {
   try{
     const existingCategory = await prisma.category.findFirst({
       where: {
         id: categoryId,
       },
+      include: {
+        _count: {
+          select: { questions: true }
+        }
+      }
     });
 
     if(!existingCategory) {
@@ -161,6 +175,8 @@ const getCategoryByIdService = async (categoryId: number): Promise<Category | Er
 
     return {
       name: existingCategory.name,
+      superCategoryId: existingCategory.superCategoryId,
+      questionCount: existingCategory._count.questions
     };
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
