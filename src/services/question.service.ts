@@ -312,8 +312,8 @@ const getQuestionByIdService = async (questionId: number): Promise<QuestionGet |
     console.log(existingQuestion);
     console.log(existingQuestion?.justification?.content);
     // Reemplazar los src en el contenido, justification y options con las URLs firmadas
-    const updatedContent = replaceImageSrcWithSignedUrls(existingQuestion.content, imageSignedUrls);
-    const updatedJustification = replaceImageSrcWithSignedUrls(existingQuestion?.justification?.content, imageSignedUrls);
+    const updatedContent = existingQuestion.content ? replaceImageSrcWithSignedUrls(existingQuestion.content, imageSignedUrls) : existingQuestion.content;
+    const updatedJustification = existingQuestion?.justification?.content ? replaceImageSrcWithSignedUrls(existingQuestion.justification.content, imageSignedUrls) : existingQuestion?.justification?.content;
 
     const updatedOptions = existingQuestion.options.map(option => ({
       ...option,
@@ -339,11 +339,16 @@ const getQuestionByIdService = async (questionId: number): Promise<QuestionGet |
 };
 
 const replaceImageSrcWithSignedUrls = (docContent: any, imageSignedUrls: SignedUrlResponse[]): any => {
+  if (!docContent || !docContent.content || !Array.isArray(docContent.content)) {
+    console.error('docContent no tiene la estructura esperada:', docContent);
+    return docContent; // Devuelve el contenido original si no tiene la estructura esperada
+  }
+
   const signedUrlsMap = Object.fromEntries(imageSignedUrls.map(img => [img.name, img.signedUrl]));
 
   // Reemplazar el src de las imágenes en el contenido
   const updatedContent = docContent.content.map((node: any) => {
-    if (node.type === 'image' && node.attrs.title && signedUrlsMap[node.attrs.title]) {
+    if (node && node.type === 'image' && node.attrs && node.attrs.title && signedUrlsMap[node.attrs.title]) {
       return {
         ...node,
         attrs: {
