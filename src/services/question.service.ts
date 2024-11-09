@@ -412,5 +412,6 @@ export {
   updateQuestionService,
   deleteQuestionService,
   questionListService,
-  getQuestionByIdService
+  getQuestionByIdService,
+  replaceImageSrcWithSignedUrls
 };
