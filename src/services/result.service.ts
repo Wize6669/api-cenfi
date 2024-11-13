@@ -184,7 +184,10 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
         imageUrl: true
       },
       orderBy: [
-        { size: 'asc' }
+        { size: 'asc' },
+        { score: 'asc' },
+        { career: 'asc' },
+        { name: 'asc' }
       ],
     });
 
