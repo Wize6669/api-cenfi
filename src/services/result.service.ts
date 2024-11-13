@@ -10,40 +10,25 @@ const prisma = new PrismaClient();
 
 const createResultService = async (input: CreateResultInput): Promise<Result | ErrorMessage> => {
   try {
-    // Upload image to S3
-    const uploadResult = await uploadImageService('results', input.image);
-    if ('error' in uploadResult) {
-      return uploadResult;
-    }
-
     // Create result in database
     const createdResult = await prisma.result.create({
       data: {
         name: input.name,
         score: input.score,
-        size: input.size,
+        order: input.order,
         career: input.career,
-        imageUrl: `results/${input.image.originalname}`,
+        imageUrl: input.image,
       },
     });
-
-    // Get signed URL for the uploaded image
-    const signedUrlResult = await getImageSignedUrlsService([
-      { name: createdResult.name, key: createdResult.imageUrl }
-    ]);
-
-    if ('error' in signedUrlResult) {
-      return signedUrlResult;
-    }
 
     // Return the created result with the signed URL
     return {
       id: createdResult.id,
       name: createdResult.name,
       score: createdResult.score,
-      size: createdResult.size,
+      order: createdResult.order,
       career: createdResult.career,
-      imageUrl: signedUrlResult[0].signedUrl,
+      imageUrl: createdResult.imageUrl,
     };
   } catch (error) {
     return handleErrors(error);
@@ -60,26 +45,13 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
 
     let imageUrl = existingResult.imageUrl;
 
-    // If a new image is provided, upload it and delete the old one
-    if (input.image) {
-      const uploadResult = await uploadImageService('results', input.image);
-      if ('error' in uploadResult) {
-        return uploadResult;
-      }
-
-      // Delete the old image
-      await deleteImagesService([{ id: existingResult.id, key: existingResult.imageUrl, questionId: 0 }]);
-
-      imageUrl = `results/${input.image.originalname}`;
-    }
-
     // Update result in database
     const updatedResult = await prisma.result.update({
       where: { id },
       data: {
         name: input.name ?? undefined,
         score: input.score ?? undefined,
-        size: input.size ?? undefined,
+        order: input.order ?? undefined,
         career: input.career ?? undefined,
         imageUrl: imageUrl,
       },
@@ -99,7 +71,7 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
       id: updatedResult.id,
       name: updatedResult.name,
       score: updatedResult.score,
-      size: updatedResult.size,
+      order: updatedResult.order,
       career: updatedResult.career,
       imageUrl: signedUrlResult[0].signedUrl,
     };
@@ -133,7 +105,7 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       id: existingResult.id,
       name: existingResult.name,
       score: existingResult.score,
-      size: existingResult.size,
+      order: existingResult.order,
       career: existingResult.career,
       imageUrl: signedUrlResult[0].signedUrl,
     };
@@ -179,12 +151,12 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
         id: true,
         name: true,
         career: true,
-        size: true,
+        order: true,
         score: true,
         imageUrl: true
       },
       orderBy: [
-        { size: 'asc' },
+        { order: 'asc' },
         { score: 'asc' },
         { career: 'asc' },
         { name: 'asc' }
@@ -204,7 +176,7 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
       id: result.id,
       name: result.name,
       score: result.score,
-      size: result.size,
+      order: result.order,
       career: result.career,
       imageUrl: imageSignedUrls[index].signedUrl,
     }));

@@ -3,24 +3,23 @@ export interface Result {
   name: string;
   score: number;
   career: string;
-  size: number;
+  order: number;
   imageUrl: string;
 }
 
 export interface CreateResultInput {
   name: string;
   score: number;
-  size: number;
+  order: number;
   career: string;
-  image: Express.Multer.File;
+  image: string;
 }
 
 export interface UpdateResultInput {
   name?: string;
   score?: number;
-  size?: number;
+  order?: number;
   career?: string;
-  image?: Express.Multer.File;
 }
 
 export interface ResultList extends Omit<Result, 'id'> {}
