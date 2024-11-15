@@ -10,6 +10,12 @@ const prisma = new PrismaClient();
 
 const createResultService = async (input: CreateResultInput): Promise<Result | ErrorMessage> => {
   try {
+    console.log(input);
+    const uploadResult = await uploadImageService('results', input.image);
+    if ('error' in uploadResult) {
+      return uploadResult;
+    }
+
     // Create result in database
     const createdResult = await prisma.result.create({
       data: {
@@ -17,7 +23,7 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
         score: input.score,
         order: input.order,
         career: input.career,
-        imageUrl: input.image,
+        imageUrl: `results/${input.image.originalname}`,
       },
     });
 
@@ -45,6 +51,19 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
 
     let imageUrl = existingResult.imageUrl;
 
+    // If a new image is provided, upload it and delete the old one
+    if (input.image) {
+      const uploadResult = await uploadImageService('results', input.image);
+      if ('error' in uploadResult) {
+        return uploadResult;
+      }
+
+      // Delete the old image
+      await deleteImagesService([{ id: existingResult.id, key: existingResult.imageUrl, questionId: 0 }]);
+
+      imageUrl = `results/${input.image.originalname}`;
+    }
+
     // Update result in database
     const updatedResult = await prisma.result.update({
       where: { id },
@@ -57,15 +76,6 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
       },
     });
 
-    // Get signed URL for the image
-    const signedUrlResult = await getImageSignedUrlsService([
-      { name: updatedResult.name, key: updatedResult.imageUrl }
-    ]);
-
-    if ('error' in signedUrlResult) {
-      return signedUrlResult;
-    }
-
     // Return the updated result with the signed URL
     return {
       id: updatedResult.id,
@@ -73,7 +83,7 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
       score: updatedResult.score,
       order: updatedResult.order,
       career: updatedResult.career,
-      imageUrl: signedUrlResult[0].signedUrl,
+      imageUrl: updatedResult.imageUrl,
     };
   } catch (error) {
     return handleErrors(error);

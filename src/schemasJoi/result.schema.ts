@@ -14,9 +14,14 @@ const createResultSchema = Joi.object({
   career: Joi.string().required().messages({
     'string.empty': 'El campo "career" es obligatorio.',
   }),
-  image: Joi.string().required().messages({
-    'string.empty': 'El campo "image" es obligatorio.',
-  }),
+  image: Joi.any().custom((value, helpers) => {
+    if (value && value.mimetype && !['image/jpeg', 'image/png'].includes(value.mimetype)) {
+
+      return helpers.message({ custom: 'El campo "image" debe ser un archivo JPG o PNG.' });
+    }
+
+    return value;
+  }).required(),
 });
 
 const updateResultSchema = Joi.object({
@@ -39,4 +44,4 @@ const resultSchemaParams = Joi.object({
   id: Joi.number().integer().min(1).required()
 });
 
-export { createResultSchema, updateResultSchema, resultSchemaParams }
+export { createResultSchema, updateResultSchema, resultSchemaParams };

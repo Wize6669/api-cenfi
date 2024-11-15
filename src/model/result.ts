@@ -12,7 +12,7 @@ export interface CreateResultInput {
   score: number;
   order: number;
   career: string;
-  image: string;
+  image: Express.Multer.File;
 }
 
 export interface UpdateResultInput {
@@ -20,6 +20,7 @@ export interface UpdateResultInput {
   score?: number;
   order?: number;
   career?: string;
+  image?: Express.Multer.File;
 }
 
 export interface ResultList extends Omit<Result, 'id'> {}

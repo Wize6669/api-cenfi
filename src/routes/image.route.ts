@@ -7,7 +7,5 @@ const upload = multer({storage: storage});
 const router = Router();
 
 router.post('/',[upload.single('question')], uploadImageController);
-router.post('/results',[upload.single('result')], uploadImageController);
-
 
 export { router };
