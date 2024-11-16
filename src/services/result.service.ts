@@ -5,13 +5,34 @@ import { Result, CreateResultInput, UpdateResultInput } from '../model/result';
 import { handleErrors } from '../utils/handles';
 import { PaginationResponse } from "../model/pagination";
 import { calculatePagination } from "../utils/pagination.util";
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {config} from "../config";
 
 const prisma = new PrismaClient();
 
+const s3Client = new S3Client({
+  region: config.get('BUCKET_REGION'),
+  credentials: {
+    accessKeyId: config.get('ACCESS_KEY'),
+    secretAccessKey: config.get('SECRET_ACCESS')
+  }
+});
+
 const createResultService = async (input: CreateResultInput): Promise<Result | ErrorMessage> => {
   try {
-    console.log(input);
-    const uploadResult = await uploadImageService('results', input.image);
+    // Generar nombre único para la imagen
+    const timestamp = new Date().toISOString(); // Genera formato: 2024-11-13T04:35:14.000Z
+    input.image.originalname.split('.').pop();
+    const uniqueImageName = `${timestamp}-${input.image.originalname}`; // Combina timestamp con nombre original
+
+    // Crear una copia del archivo con el nuevo nombre
+    const imageWithNewName = {
+      ...input.image,
+      originalname: uniqueImageName
+    };
+
+    // Subir la imagen con el nuevo nombre
+    const uploadResult = await uploadImageService('results', imageWithNewName);
     if ('error' in uploadResult) {
       return uploadResult;
     }
@@ -23,7 +44,7 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
         score: input.score,
         order: input.order,
         career: input.career,
-        imageUrl: `results/${input.image.originalname}`,
+        imageUrl: `results/${uniqueImageName}`,
       },
     });
 
@@ -102,12 +123,25 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       return { error: 'Result not found', code: 404 };
     }
 
+    // Verificar que existe imageUrl
+    if (!existingResult.imageUrl) {
+      return { error: 'Image URL not found', code: 404 };
+    }
+
     // Obtener URL firmada para la imagen
     const signedUrlResult = await getImageSignedUrlsService([
-      { name: existingResult.name, key: existingResult.imageUrl }
+      {
+        key: existingResult.imageUrl,  // Solo pasamos el key/imageUrl
+        name: existingResult.imageUrl.split('/').pop() || '' // Extraemos el nombre del archivo de la URL
+      }
     ]);
 
+    // Log para debugging
+    console.log('Existing Result:', existingResult);
+    console.log('Signed URL Result:', signedUrlResult);
+
     if ('error' in signedUrlResult) {
+      console.error('Error getting signed URL:', signedUrlResult.error);
       return signedUrlResult;
     }
 
@@ -120,6 +154,7 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       imageUrl: signedUrlResult[0].signedUrl,
     };
   } catch (error) {
+    console.error('Get Result Error:', error);
     return handleErrors(error);
   }
 }
@@ -131,10 +166,34 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
       where: {
         id: resultId,
       },
+      select: {
+        id: true,
+        imageUrl: true
+      }
     });
 
     if (!existingResult) {
       return { error: 'Result not found', code: 404 };
+    }
+
+    console.log('URL de la imagen:', existingResult.imageUrl); // Log 1
+
+    if (existingResult.imageUrl) {
+      const imageKey = existingResult.imageUrl;
+      console.log('Key extraído:', imageKey); // Log 2
+
+      try {
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: config.get('BUCKET_NAME'),
+          Key: imageKey
+        });
+        console.log('Comando de borrado:', deleteCommand); // Log 3
+
+        const response = await s3Client.send(deleteCommand);
+        console.log('Respuesta de S3:', response); // Log 4
+      } catch (s3Error) {
+        console.error('Error detallado de S3:', JSON.stringify(s3Error, null, 2)); // Log detallado del error
+      }
     }
 
     await prisma.result.delete({
@@ -145,6 +204,7 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
 
     return {code: 204};
   } catch (error) {
+    console.error('Error general:', error); // Log 5
     return handleErrors(error);
   }
 }
