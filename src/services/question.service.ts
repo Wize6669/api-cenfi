@@ -97,8 +97,6 @@ const updateQuestionService = async (questionId: number, updatedQuestion: Questi
     // Combinar los IDs de simuladores existentes y actualizados
     const combinedSimulatorIds = [...new Set([...existingSimulatorIds, ...updatedSimulatorIds])];
 
-    console.log("hys", updatedQuestion.justification);
-
     const updatedQuestionData = await prisma.question.update({
       where: { id: questionId },
       data: {
@@ -225,57 +223,6 @@ const deleteQuestionService = async (questionId: number): Promise<InfoMessage | 
   }
 };
 
-
-// const getQuestionByIdService = async (questionId: number): Promise<QuestionGet | ErrorMessage> => {
-//   try {
-//     const existingQuestion = await prisma.question.findUnique({
-//       where: {
-//         id: questionId,
-//       },
-//       include: {
-//         options: true,
-//         category: true,
-//         simulators: true,
-//         justification: true,
-//       },
-//     });
-//
-//     if (!existingQuestion) {
-//
-//       return { error: 'Question not found', code: 404 };
-//     }
-//
-//     const existingImages = await prisma.imagen.findMany({
-//       where: { questionId: questionId },
-//       select: {
-//         name: true,
-//         key: true,
-//       },
-//     });
-//
-//     const imageSignedUrls = await getImageSignedUrlsService(existingImages);
-//
-//     console.log(existingQuestion);
-//     console.log(existingQuestion.content);
-//     console.log(existingImages);
-//     console.log(imageSignedUrls);
-//
-//     return {
-//       content: existingQuestion.content as Object,
-//       justification: existingQuestion?.justification as Object | undefined,
-//       categoryId: existingQuestion.categoryId ?? undefined,
-//       categoryName: existingQuestion.category?.name ?? undefined,
-//       superCategoryId: existingQuestion.category?.superCategoryId ?? undefined,
-//       simulators: existingQuestion.simulators.map(sim => ({ id: sim.id })),
-//       options: existingQuestion.options,
-//     };
-//
-//   } catch (error) {
-//
-//     return handleErrors(error);
-//   }
-// };
-
 const getQuestionByIdService = async (questionId: number): Promise<QuestionGet | ErrorMessage> => {
   try {
     const existingQuestion = await prisma.question.findUnique({
@@ -308,9 +255,6 @@ const getQuestionByIdService = async (questionId: number): Promise<QuestionGet |
       return { error: imageSignedUrls.error, code: imageSignedUrls.code };
     }
 
-    console.log(imageSignedUrls);
-    console.log(existingQuestion);
-    console.log(existingQuestion?.justification?.content);
     // Reemplazar los src en el contenido, justification y options con las URLs firmadas
     const updatedContent = existingQuestion.content ? replaceImageSrcWithSignedUrls(existingQuestion.content, imageSignedUrls) : existingQuestion.content;
     const updatedJustification = existingQuestion?.justification?.content ? replaceImageSrcWithSignedUrls(existingQuestion.justification.content, imageSignedUrls) : existingQuestion?.justification?.content;
@@ -340,8 +284,8 @@ const getQuestionByIdService = async (questionId: number): Promise<QuestionGet |
 
 const replaceImageSrcWithSignedUrls = (docContent: any, imageSignedUrls: SignedUrlResponse[]): any => {
   if (!docContent || !docContent.content || !Array.isArray(docContent.content)) {
-    console.error('docContent no tiene la estructura esperada:', docContent);
-    return docContent; // Devuelve el contenido original si no tiene la estructura esperada
+
+    return { error: 'docContent no tiene la estructura esperada', code: 400 };
   }
 
   const signedUrlsMap = Object.fromEntries(imageSignedUrls.map(img => [img.name, img.signedUrl]));

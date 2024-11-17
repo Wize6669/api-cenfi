@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { uploadImageService, getImageSignedUrlsService, deleteImagesService } from './image.service';
-import { ErrorMessage, InfoMessage} from '../model/messages';
+import { ErrorMessage, InfoMessage } from '../model/messages';
 import { Result, CreateResultInput, UpdateResultInput } from '../model/result';
 import { handleErrors } from '../utils/handles';
-import { PaginationResponse } from "../model/pagination";
-import { calculatePagination } from "../utils/pagination.util";
+import { PaginationResponse } from '../model/pagination';
+import { calculatePagination } from '../utils/pagination.util';
 import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import {config} from "../config";
+import { config } from '../config';
 
 const prisma = new PrismaClient();
 
@@ -20,6 +20,8 @@ const s3Client = new S3Client({
 
 const createResultService = async (input: CreateResultInput): Promise<Result | ErrorMessage> => {
   try {
+    if (!input.image) return { error: 'Te falto enviar la imagen.', code: 400 };
+
     // Generar nombre único para la imagen
     const timestamp = new Date().toISOString(); // Genera formato: 2024-11-13T04:35:14.000Z
     input.image.originalname.split('.').pop();
@@ -60,7 +62,7 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
   } catch (error) {
     return handleErrors(error);
   }
-}
+};
 
 const updateResultService = async (id: number, input: UpdateResultInput): Promise<Result | ErrorMessage> => {
   try {
@@ -71,6 +73,8 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
     }
 
     let imageUrl = existingResult.imageUrl;
+
+    if (!input.image) return { error: 'Te falto enviar la imagen.', code: 400 };
 
     // If a new image is provided, upload it and delete the old one
     if (input.image) {
@@ -107,9 +111,10 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
       imageUrl: updatedResult.imageUrl,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
 const getResultByIdService = async (resultId: number): Promise<Result | ErrorMessage> => {
   try {
@@ -136,13 +141,9 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       }
     ]);
 
-    // Log para debugging
-    console.log('Existing Result:', existingResult);
-    console.log('Signed URL Result:', signedUrlResult);
-
     if ('error' in signedUrlResult) {
-      console.error('Error getting signed URL:', signedUrlResult.error);
-      return signedUrlResult;
+
+      return { error: 'Error getting image(s)', code: 400 };
     }
 
     return {
@@ -154,10 +155,10 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       imageUrl: signedUrlResult[0].signedUrl,
     };
   } catch (error) {
-    console.error('Get Result Error:', error);
+
     return handleErrors(error);
   }
-}
+};
 
 
 const deleteResultService = async (resultId: number): Promise<InfoMessage | ErrorMessage> => {
@@ -176,23 +177,22 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
       return { error: 'Result not found', code: 404 };
     }
 
-    console.log('URL de la imagen:', existingResult.imageUrl); // Log 1
-
     if (existingResult.imageUrl) {
       const imageKey = existingResult.imageUrl;
-      console.log('Key extraído:', imageKey); // Log 2
 
       try {
         const deleteCommand = new DeleteObjectCommand({
           Bucket: config.get('BUCKET_NAME'),
           Key: imageKey
         });
-        console.log('Comando de borrado:', deleteCommand); // Log 3
 
-        const response = await s3Client.send(deleteCommand);
-        console.log('Respuesta de S3:', response); // Log 4
-      } catch (s3Error) {
-        console.error('Error detallado de S3:', JSON.stringify(s3Error, null, 2)); // Log detallado del error
+        await s3Client.send(deleteCommand);
+      } catch (s3Error: any) {
+        if ('name' in s3Error) {
+          return { error: `S3 error: ${s3Error.message}`, code: 400 };
+        }
+
+        return { error: 'An error occurred with the server', code: 500 };
       }
     }
 
@@ -202,17 +202,17 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
       },
     });
 
-    return {code: 204};
+    return { code: 204 };
   } catch (error) {
-    console.error('Error general:', error); // Log 5
+
     return handleErrors(error);
   }
-}
+};
 
 const resultListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<Result> | ErrorMessage> => {
   try {
     const total = await prisma.result.count();
-    const paginationInfo = calculatePagination(page, count, total)
+    const paginationInfo = calculatePagination(page, count, total);
 
     const resultList = await prisma.result.findMany({
       skip: (page - 1) * count,
@@ -256,8 +256,9 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
       data,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
-export {createResultService, updateResultService, deleteResultService, getResultByIdService, resultListService}
+export { createResultService, updateResultService, deleteResultService, getResultByIdService, resultListService };
