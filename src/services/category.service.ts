@@ -1,4 +1,4 @@
-import {PrismaClient} from "@prisma/client";
+import {PrismaClient, Prisma } from "@prisma/client";
 import {Category, CategoryList} from "../model/category";
 import {ErrorMessage, InfoMessage} from "../model/messages";
 import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
@@ -80,37 +80,50 @@ const updateCategoryService = async (updateCategory: Category): Promise<Category
 }
 
 const deleteCategoryService = async (categoryId: number): Promise<InfoMessage | ErrorMessage> => {
-  try{
+  try {
     const existingCategory = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-      },
+      where: { id: categoryId },
+      include: { superCategory: true }
     });
-    if(!existingCategory) {
-      return {error: 'Category not found', code: 404};
+
+    if (!existingCategory) {
+      return { error: 'Category not found', code: 404 };
     }
 
     console.log(`Category found. Deleting category with ID: ${categoryId}`);
-    await prisma.category.delete({
-      where: {
-        id: categoryId,
-      },
+
+    await prisma.$transaction(async (tx) => {
+      // Obtener o crear la categoría "Sin categoría"
+      const uncategorizedCategory = await getOrCreateUncategorizedCategory(tx);
+
+      // Actualizar preguntas asociadas
+      await tx.question.updateMany({
+        where: { categoryId },
+        data: { categoryId: uncategorizedCategory.id },
+      });
+
+      // Manejar subcategorías
+      await handleSubcategories(tx, categoryId, uncategorizedCategory.id);
+
+      // Eliminar la categoría
+      await tx.category.delete({
+        where: { id: categoryId },
+      });
     });
 
     console.log(`Category with ID: ${categoryId} deleted successfully`);
-    return {code: 204};
+    return { code: 204 };
 
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
       const fieldName = error.meta?.field_name;
-
       return { error: `Prisma\n Field name: ${fieldName} - Message: ${error.message}`, code: 400 };
     }
-
-    console.log(error)
-    return {error: 'Error occurred with the server', code: 500};
+    console.log(error);
+    return { error: 'Error occurred with the server', code: 500 };
   }
 }
+
 
 const categoryListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<CategoryList> | ErrorMessage> => {
   try{
@@ -186,6 +199,40 @@ const getCategoryByIdService = async (categoryId: number): Promise<CategoryList 
     }
 
     return {error: 'Error occurred with the server xd', code: 500};
+  }
+}
+
+async function getOrCreateUncategorizedCategory(tx: Prisma.TransactionClient) {
+  const uncategorizedName = "Sin categoría";
+
+  // Primero, intentamos encontrar la categoría existente
+  let uncategorizedCategory = await tx.category.findFirst({
+    where: { name: uncategorizedName }
+  });
+
+  // Si no existe, la creamos
+  if (!uncategorizedCategory) {
+    uncategorizedCategory = await tx.category.create({
+      data: {
+        name: uncategorizedName,
+        superCategoryId: 3,
+      },
+    });
+  }
+
+  return uncategorizedCategory;
+}
+
+async function handleSubcategories(tx: Prisma.TransactionClient, categoryId: number, uncategorizedCategoryId: number) {
+  const subcategories = await tx.category.findMany({
+    where: { superCategoryId: categoryId },
+  });
+
+  for (const subcategory of subcategories) {
+    await tx.category.update({
+      where: { id: subcategory.id },
+      data: { superCategoryId: uncategorizedCategoryId },
+    });
   }
 }
 
