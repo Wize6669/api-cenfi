@@ -5,6 +5,11 @@ README.md
 .editorconfig
 .gitignore
 Will.http
+Francisco.http
+question.http
+option.http
 .git/
 Dockerfile
 .idea/
+docker-compose.yml
+nginx.conf
