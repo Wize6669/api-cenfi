@@ -20,7 +20,8 @@ const createSimulatorController = async (req: Request, res: Response) => {
   })
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
   res.status(201).json({message: 'Simulator created successfully'});
 }
@@ -40,7 +41,8 @@ const updateSimulatorController = async (req: Request, res: Response) => {
   })
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
   res.status(201).json(result);
 }
@@ -50,7 +52,8 @@ const deleteSimulatorController = async (req: Request, res: Response) => {
   const result = await deleteSimulatorService(id);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(result.code).json(result);
@@ -61,7 +64,8 @@ const getSimulatorByIdController = async (req: Request, res: Response) => {
   const result = await getSimulatorByIdService(id);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);
@@ -74,7 +78,8 @@ const simulatorListController = async (req: Request, res: Response) => {
   const result = await simulatorListService(pageAux, countAux);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);
@@ -86,7 +91,8 @@ const resetSimulatorPasswordController = async (req: Request, res: Response) => 
   const result = await resetSimulatorPasswordService(id, newPassword);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);

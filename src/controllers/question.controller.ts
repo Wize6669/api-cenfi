@@ -18,7 +18,7 @@ const createQuestionController = async (req: Request, res: Response) => {
 
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(201).json({message: 'Category created successfully.'});
@@ -38,7 +38,7 @@ const updateQuestionController = async (req: Request, res: Response) => {
 
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json({message: 'Category updated successfully.'});
@@ -51,7 +51,7 @@ const deleteQuestionController = async (req: Request, res: Response)  => {
 
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   return res.status(result.code).send('');
@@ -64,7 +64,7 @@ const getQuestionByIdController = async (req: Request, res: Response) => {
 
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);
@@ -75,9 +75,10 @@ const listQuestionsController = async (req: Request, res: Response) => {
   const pageAux = Number(page);
   const countAux = Number(count);
   const result = await questionListService(pageAux, countAux);
+
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   return res.status(200).json(result);

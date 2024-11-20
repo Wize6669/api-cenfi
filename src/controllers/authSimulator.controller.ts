@@ -8,7 +8,8 @@ const signInSimulatorController = async (req: Request, res: Response) => {
   const result = await singInSimulatorService(simulatorId, password);
 
   if('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   const token = generateAccessToken(result);

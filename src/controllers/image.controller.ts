@@ -6,13 +6,15 @@ const uploadImageController = async (req: Request, res: Response) => {
   const file = req.file;
 
   if (!file) {
-    return res.status(400).json({message: 'No file uploaded'});
+
+    return res.status(400).json({error: 'No file uploaded'});
   }
 
   const result = await uploadImageService(type, file);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(result.code).json(result);

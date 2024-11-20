@@ -12,7 +12,8 @@ const createResultController = async (req: Request, res: Response) => {
   const image = req.file;
 
   if (!image) {
-    return res.status(400).json({ message: 'No se ha proporcionado una imagen' });
+
+    return res.status(400).json({ error: 'No se ha proporcionado una imagen' });
   }
 
   const result = await createResultService({
@@ -24,7 +25,8 @@ const createResultController = async (req: Request, res: Response) => {
   });
 
   if ('error' in result) {
-    return res.status(result.code).json({ message: result.error });
+
+    return res.status(result.code).json({ error: result.error });
   }
 
   res.status(201).json({ message: 'Resultado creado exitosamente', result });
@@ -44,7 +46,8 @@ const updateResultController = async (req: Request, res: Response) => {
   });
 
   if ('error' in result) {
-    return res.status(result.code).json({ message: result.error });
+
+    return res.status(result.code).json({ error: result.error });
   }
 
   res.status(200).json({ message: 'Resultado actualizado exitosamente', result });
@@ -57,7 +60,8 @@ const listResultController = async (req: Request, res: Response) => {
 
   const result = await resultListService(pageAux, countAux);
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   return res.status(200).json(result);
@@ -69,7 +73,7 @@ const getResultByIdController = async (req: Request, res: Response) => {
   const result = await getResultByIdService(numericId);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);
@@ -82,7 +86,7 @@ const deleteResultController = async (req: Request, res: Response) => {
 
   if ('error' in result) {
 
-    return res.status(result.code).json({message: result.error});
+    return res.status(result.code).json({error: result.error});
   }
 
   return res.status(result.code).send('');

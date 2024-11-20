@@ -12,8 +12,10 @@ const createCourseController = async (req: Request, res: Response) => {
   const result = await createCourseService({name, university, schedule, startDate, endDate, cost, paymentOptions, syllabus, benefits, phone, inPersonSchedules, virtualSchedules})
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
+
   res.status(201).json({message: 'Course created successfully.'});
 }
 
@@ -23,8 +25,10 @@ const updateCourseController = async (req: Request, res: Response) => {
 
   const result = await updateCourseService({id, name, university, schedule, startDate, endDate, cost, paymentOptions, syllabus, benefits, phone, inPersonSchedules, virtualSchedules});
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
+
   res.status(200).json({message: 'Course updated successfully.'});
 }
 
@@ -33,7 +37,8 @@ const deleteCourseController = async (req: Request, res: Response) => {
   const result = await deleteCourseService(id);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(result.code).json(result);
@@ -46,8 +51,10 @@ const listCourseController = async (req: Request, res: Response) => {
   const result = await courseListService(pageAux, countAux);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
+
   res.status(200).json(result);
 }
 
@@ -56,8 +63,10 @@ const getCourseController = async (req: Request, res: Response) => {
   const result = await getCourseByIdService(id);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
+
   res.status(200).json(result);
 }
 

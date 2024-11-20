@@ -6,7 +6,8 @@ const resetPasswordController = async (req: Request, res: Response) => {
   const result = await resetPasswordService(email, newPassword)
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   res.status(200).json(result);

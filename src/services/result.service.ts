@@ -36,6 +36,7 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
     // Subir la imagen con el nuevo nombre
     const uploadResult = await uploadImageService('results', imageWithNewName);
     if ('error' in uploadResult) {
+
       return uploadResult;
     }
 
@@ -60,6 +61,7 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
       imageUrl: createdResult.imageUrl,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
 };
@@ -73,8 +75,6 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
     }
 
     let imageUrl = existingResult.imageUrl;
-
-    if (!input.image) return { error: 'Te falto enviar la imagen.', code: 400 };
 
     // If a new image is provided, upload it and delete the old one
     if (input.image) {
@@ -239,6 +239,7 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
     );
 
     if ('error' in imageSignedUrls) {
+
       return imageSignedUrls;
     }
 

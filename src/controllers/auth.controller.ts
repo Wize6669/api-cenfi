@@ -7,8 +7,10 @@ const signUpController = async (req: Request, res: Response) => {
   const result = await signUpService({ name, lastName, email, password, roleId })
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
+
   res.status(201).json({message: 'User created successfully'});
 }
 
@@ -18,7 +20,8 @@ const signInController = async (req: Request, res: Response) => {
   const result = await signInService(email, password,roleIdAux);
 
   if ('error' in result) {
-    return res.status(result.code).json({message: result.error});
+
+    return res.status(result.code).json({error: result.error});
   }
 
   const token = generateAccessToken(result);
