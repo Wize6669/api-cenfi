@@ -19,7 +19,7 @@ services:
           cpus: '0.5'
           memory: 250M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3001/health" ]
       interval: 13s
       timeout: 10s
       retries: 3
@@ -44,4 +44,5 @@ services:
 
 networks:
   app-cenfi:
+    name: app-cenfi
     driver: bridge
