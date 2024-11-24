@@ -1,9 +1,9 @@
 name: Build and Lift with Docker Compose
 
 on:
-  push:
+  pull_request:
     branches:
-      - main
+      - releasev1
 
 jobs:
   run_pull:
@@ -20,8 +20,10 @@ jobs:
           port: 22
           script: |
             cd /home/ubuntu/cenfi-app/api-cenfi
-            git fetch --depth=1 origin main
-            git rebase origin/main
+            touch testFile.txt
+            git fetch --depth=1
+            git checkout main
+            git pull
             echo "Tearing down Docker Compose containers..."
             docker compose down || true
             echo "Starting Docker Compose containers with rebuild..."
