@@ -1,0 +1,29 @@
+name: Build and Lift with Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run_pull:
+    name: run pull
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into remote server and run commands
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/ubuntu/cenfi-app/api-cenfi
+            git fetch --depth=1 origin main
+            git rebase origin/main
+            echo "Tearing down Docker Compose containers..."
+            docker compose down || true
+            echo "Starting Docker Compose containers with rebuild..."
+            docker compose up --build -d
+            exit
