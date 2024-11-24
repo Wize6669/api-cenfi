@@ -1,4 +1,4 @@
-import {Prisma, PrismaClient} from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import {
   SimulatorChangePassword,
   SimulatorRequest,
@@ -6,13 +6,15 @@ import {
   SimulatorUpdate,
   SimulatorWithQuestions
 } from "../model/simulator";
-import {ErrorMessage, InfoMessage} from "../model/messages";
+import { ErrorMessage, InfoMessage} from "../model/messages";
 import bcrypt from "bcryptjs";
-import {PrismaClientKnownRequestError} from "@prisma/client/runtime/library";
-import {PaginationResponse} from "../model/pagination";
-import {calculatePagination} from "../utils/pagination.util";
-import {Question, QuestionCreate} from "../model/question";
-import {handleErrors} from "../utils/handles";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { PaginationResponse } from "../model/pagination";
+import { calculatePagination } from "../utils/pagination.util";
+import { Question, QuestionCreate } from "../model/question";
+import { handleErrors } from "../utils/handles";
+import { getImageSignedUrlsService } from './image.service';
+import { replaceImageSrcWithSignedUrls } from './question.service';
 
 const prisma = new PrismaClient();
 
@@ -323,6 +325,7 @@ const getSimulatorByIdService = async (
             },
             options: true,
             justification: true,
+            images: true,
           }
         }
       }
@@ -332,28 +335,45 @@ const getSimulatorByIdService = async (
       return { error: 'Simulator not found', code: 404 };
     }
 
-    // Formateamos las preguntas según la interfaz Question
-    const formattedQuestions: Question[] = existingSimulator.questions.map(question => ({
-      id: question.id,
-      content: question.content as Object,
-      justification: question.justification as Object || undefined,
-      categoryId: question.categoryId ?? undefined,
-      category: question.category ? {
-        id: question.category.id,
-        name: question.category.name,
-        superCategoryId: question.category.superCategoryId,
-        superCategory: question.category.superCategory ? {
-          id: question.category.superCategory.id,
-          name: question.category.superCategory.name
-        } : undefined
-      } : undefined,
-      options: question.options.map(option => ({
-        id: option.id,
-        content: option.content,
-        isCorrect: option.isCorrect,
-        questionId: option.questionId
-      }))
-    }));
+    // Recopilamos todas las imágenes de todas las preguntas
+    const allImages = existingSimulator.questions.flatMap(question => question.images);
+
+    // Obtenemos las URLs firmadas para todas las imágenes
+    const imageSignedUrls = await getImageSignedUrlsService(allImages);
+
+    if ('error' in imageSignedUrls) {
+      return { error: imageSignedUrls.error, code: imageSignedUrls.code };
+    }
+
+    // Formateamos las preguntas y reemplazamos las URLs de las imágenes
+    const formattedQuestions: Question[] = existingSimulator.questions.map(question => {
+      const updatedContent = replaceImageSrcWithSignedUrls(question.content, imageSignedUrls);
+      const updatedJustification = question.justification
+        ? replaceImageSrcWithSignedUrls(question.justification.content, imageSignedUrls)
+        : undefined;
+
+      const updatedOptions = question.options.map(option => ({
+        ...option,
+        content: replaceImageSrcWithSignedUrls(option.content, imageSignedUrls),
+      }));
+
+      return {
+        id: question.id,
+        content: updatedContent,
+        justification: updatedJustification ? { content: updatedJustification } : undefined,
+        categoryId: question.categoryId ?? undefined,
+        category: question.category ? {
+          id: question.category.id,
+          name: question.category.name,
+          superCategoryId: question.category.superCategoryId,
+          superCategory: question.category.superCategory ? {
+            id: question.category.superCategory.id,
+            name: question.category.superCategory.name
+          } : undefined
+        } : undefined,
+        options: updatedOptions
+      };
+    });
 
     // Calculamos categoryQuestions
     const categoryQuestions = formattedQuestions.reduce((acc, question) => {

@@ -1,7 +1,7 @@
 model Result {
     id        Int      @id @default(autoincrement())
     name      String
-    size      Int
+    order      Int
     career    String
     score     Float
     imageUrl  String

@@ -1,18 +1,42 @@
 import { PrismaClient } from '@prisma/client';
 import { uploadImageService, getImageSignedUrlsService, deleteImagesService } from './image.service';
-import { ErrorMessage, InfoMessage} from '../model/messages';
+import { ErrorMessage, InfoMessage } from '../model/messages';
 import { Result, CreateResultInput, UpdateResultInput } from '../model/result';
 import { handleErrors } from '../utils/handles';
-import { PaginationResponse } from "../model/pagination";
-import { calculatePagination } from "../utils/pagination.util";
+import { PaginationResponse } from '../model/pagination';
+import { calculatePagination } from '../utils/pagination.util';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { config } from '../config';
 
 const prisma = new PrismaClient();
 
+const s3Client = new S3Client({
+  region: config.get('BUCKET_REGION'),
+  credentials: {
+    accessKeyId: config.get('ACCESS_KEY'),
+    secretAccessKey: config.get('SECRET_ACCESS')
+  }
+});
+
 const createResultService = async (input: CreateResultInput): Promise<Result | ErrorMessage> => {
   try {
-    // Upload image to S3
-    const uploadResult = await uploadImageService('results', input.image);
+    if (!input.image) return { error: 'Te falto enviar la imagen.', code: 400 };
+
+    // Generar nombre único para la imagen
+    const timestamp = new Date().toISOString(); // Genera formato: 2024-11-13T04:35:14.000Z
+    input.image.originalname.split('.').pop();
+    const uniqueImageName = `${timestamp}-${input.image.originalname}`; // Combina timestamp con nombre original
+
+    // Crear una copia del archivo con el nuevo nombre
+    const imageWithNewName = {
+      ...input.image,
+      originalname: uniqueImageName
+    };
+
+    // Subir la imagen con el nuevo nombre
+    const uploadResult = await uploadImageService('results', imageWithNewName);
     if ('error' in uploadResult) {
+
       return uploadResult;
     }
 
@@ -21,34 +45,26 @@ const createResultService = async (input: CreateResultInput): Promise<Result | E
       data: {
         name: input.name,
         score: input.score,
-        size: input.size,
+        order: input.order,
         career: input.career,
-        imageUrl: `results/${input.image.originalname}`,
+        imageUrl: `results/${uniqueImageName}`,
       },
     });
-
-    // Get signed URL for the uploaded image
-    const signedUrlResult = await getImageSignedUrlsService([
-      { name: createdResult.name, key: createdResult.imageUrl }
-    ]);
-
-    if ('error' in signedUrlResult) {
-      return signedUrlResult;
-    }
 
     // Return the created result with the signed URL
     return {
       id: createdResult.id,
       name: createdResult.name,
       score: createdResult.score,
-      size: createdResult.size,
+      order: createdResult.order,
       career: createdResult.career,
-      imageUrl: signedUrlResult[0].signedUrl,
+      imageUrl: createdResult.imageUrl,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
 const updateResultService = async (id: number, input: UpdateResultInput): Promise<Result | ErrorMessage> => {
   try {
@@ -79,34 +95,26 @@ const updateResultService = async (id: number, input: UpdateResultInput): Promis
       data: {
         name: input.name ?? undefined,
         score: input.score ?? undefined,
-        size: input.size ?? undefined,
+        order: input.order ?? undefined,
         career: input.career ?? undefined,
         imageUrl: imageUrl,
       },
     });
-
-    // Get signed URL for the image
-    const signedUrlResult = await getImageSignedUrlsService([
-      { name: updatedResult.name, key: updatedResult.imageUrl }
-    ]);
-
-    if ('error' in signedUrlResult) {
-      return signedUrlResult;
-    }
 
     // Return the updated result with the signed URL
     return {
       id: updatedResult.id,
       name: updatedResult.name,
       score: updatedResult.score,
-      size: updatedResult.size,
+      order: updatedResult.order,
       career: updatedResult.career,
-      imageUrl: signedUrlResult[0].signedUrl,
+      imageUrl: updatedResult.imageUrl,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
 const getResultByIdService = async (resultId: number): Promise<Result | ErrorMessage> => {
   try {
@@ -120,27 +128,37 @@ const getResultByIdService = async (resultId: number): Promise<Result | ErrorMes
       return { error: 'Result not found', code: 404 };
     }
 
+    // Verificar que existe imageUrl
+    if (!existingResult.imageUrl) {
+      return { error: 'Image URL not found', code: 404 };
+    }
+
     // Obtener URL firmada para la imagen
     const signedUrlResult = await getImageSignedUrlsService([
-      { name: existingResult.name, key: existingResult.imageUrl }
+      {
+        key: existingResult.imageUrl,  // Solo pasamos el key/imageUrl
+        name: existingResult.imageUrl.split('/').pop() || '' // Extraemos el nombre del archivo de la URL
+      }
     ]);
 
     if ('error' in signedUrlResult) {
-      return signedUrlResult;
+
+      return { error: 'Error getting image(s)', code: 400 };
     }
 
     return {
       id: existingResult.id,
       name: existingResult.name,
       score: existingResult.score,
-      size: existingResult.size,
+      order: existingResult.order,
       career: existingResult.career,
       imageUrl: signedUrlResult[0].signedUrl,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
 
 const deleteResultService = async (resultId: number): Promise<InfoMessage | ErrorMessage> => {
@@ -149,10 +167,33 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
       where: {
         id: resultId,
       },
+      select: {
+        id: true,
+        imageUrl: true
+      }
     });
 
     if (!existingResult) {
       return { error: 'Result not found', code: 404 };
+    }
+
+    if (existingResult.imageUrl) {
+      const imageKey = existingResult.imageUrl;
+
+      try {
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: config.get('BUCKET_NAME'),
+          Key: imageKey
+        });
+
+        await s3Client.send(deleteCommand);
+      } catch (s3Error: any) {
+        if ('name' in s3Error) {
+          return { error: `S3 error: ${s3Error.message}`, code: 400 };
+        }
+
+        return { error: 'An error occurred with the server', code: 500 };
+      }
     }
 
     await prisma.result.delete({
@@ -161,16 +202,17 @@ const deleteResultService = async (resultId: number): Promise<InfoMessage | Erro
       },
     });
 
-    return {code: 204};
+    return { code: 204 };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
 const resultListService = async (page: number = 1, count: number = 5): Promise<PaginationResponse<Result> | ErrorMessage> => {
   try {
     const total = await prisma.result.count();
-    const paginationInfo = calculatePagination(page, count, total)
+    const paginationInfo = calculatePagination(page, count, total);
 
     const resultList = await prisma.result.findMany({
       skip: (page - 1) * count,
@@ -179,12 +221,15 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
         id: true,
         name: true,
         career: true,
-        size: true,
+        order: true,
         score: true,
         imageUrl: true
       },
       orderBy: [
-        { size: 'asc' }
+        { order: 'asc' },
+        { score: 'asc' },
+        { career: 'asc' },
+        { name: 'asc' }
       ],
     });
 
@@ -194,6 +239,7 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
     );
 
     if ('error' in imageSignedUrls) {
+
       return imageSignedUrls;
     }
 
@@ -201,7 +247,7 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
       id: result.id,
       name: result.name,
       score: result.score,
-      size: result.size,
+      order: result.order,
       career: result.career,
       imageUrl: imageSignedUrls[index].signedUrl,
     }));
@@ -211,8 +257,9 @@ const resultListService = async (page: number = 1, count: number = 5): Promise<P
       data,
     };
   } catch (error) {
+
     return handleErrors(error);
   }
-}
+};
 
-export {createResultService, updateResultService, deleteResultService, getResultByIdService, resultListService}
+export { createResultService, updateResultService, deleteResultService, getResultByIdService, resultListService };

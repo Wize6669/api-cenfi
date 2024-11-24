@@ -3,14 +3,14 @@ export interface Result {
   name: string;
   score: number;
   career: string;
-  size: number;
+  order: number;
   imageUrl: string;
 }
 
 export interface CreateResultInput {
   name: string;
   score: number;
-  size: number;
+  order: number;
   career: string;
   image: Express.Multer.File;
 }
@@ -18,7 +18,7 @@ export interface CreateResultInput {
 export interface UpdateResultInput {
   name?: string;
   score?: number;
-  size?: number;
+  order?: number;
   career?: string;
   image?: Express.Multer.File;
 }

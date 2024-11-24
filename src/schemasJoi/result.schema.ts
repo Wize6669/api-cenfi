@@ -8,12 +8,20 @@ const createResultSchema = Joi.object({
     'number.base': 'El campo "score" debe ser un número.',
     'number.min': 'El campo "score" debe ser mayor o igual a 0.',
   }),
-  size: Joi.number().required().messages({
-    'number.base': 'El campo "size" es obligatorio.',
+  order: Joi.number().required().messages({
+    'number.base': 'El campo "order" es obligatorio.',
   }),
   career: Joi.string().required().messages({
     'string.empty': 'El campo "career" es obligatorio.',
   }),
+  image: Joi.any().custom((value, helpers) => {
+    if (value && value.mimetype && !['image/jpeg', 'image/png'].includes(value.mimetype)) {
+
+      return helpers.message({ custom: 'El campo "image" debe ser un archivo JPG o PNG.' });
+    }
+
+    return value;
+  }).required(),
 });
 
 const updateResultSchema = Joi.object({
@@ -24,8 +32,8 @@ const updateResultSchema = Joi.object({
     'number.base': 'El campo "score" debe ser un número.',
     'number.min': 'El campo "score" debe ser mayor o igual a 0.',
   }),
-  size: Joi.number().optional().messages({
-    'number.base': 'El campo "size" debe ser un número.',
+  order: Joi.number().optional().messages({
+    'number.base': 'El campo "order" debe ser un número.',
   }),
   career: Joi.string().optional().messages({
     'string.empty': 'El campo "career" no puede estar vacío.',
@@ -36,4 +44,4 @@ const resultSchemaParams = Joi.object({
   id: Joi.number().integer().min(1).required()
 });
 
-export { createResultSchema, updateResultSchema, resultSchemaParams }
+export { createResultSchema, updateResultSchema, resultSchemaParams };

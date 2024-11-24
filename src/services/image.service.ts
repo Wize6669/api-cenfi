@@ -34,7 +34,7 @@ const uploadImageService = async (type: String, file: Express.Multer.File): Prom
   try {
     if (!type) {
 
-      return {error: 'The type must be specified', code: 400};
+      return { error: 'The type must be specified', code: 400 };
     }
 
     const buffer = file.buffer;
@@ -55,17 +55,17 @@ const uploadImageService = async (type: String, file: Express.Multer.File): Prom
     };
   } catch (error: any) {
     if ('name' in error) {
-      return {error: `S3 error: ${error.message}`, code: 400};
+      return { error: `S3 error: ${error.message}`, code: 400 };
     }
 
-    return {error: 'An error occurred with the server', code: 500};
+    return { error: 'An error occurred with the server', code: 500 };
   }
 };
 
 const deleteImagesService = async (images: PropsImage []): Promise<InfoMessage | ErrorMessage> => {
   try {
     if (!images || images.length === 0) {
-      return {error: 'The images array must not be empty', code: 400};
+      return { error: 'The images array must not be empty', code: 400 };
     }
 
     const ids = images.map(image => image.id);
@@ -91,14 +91,14 @@ const deleteImagesService = async (images: PropsImage []): Promise<InfoMessage |
       await s3Client.send(command);
     }));
 
-    return {code: 204};
+    return { code: 204 };
   } catch (error: any) {
     if ('name' in error) {
 
-      return {error: `S3 error: ${error.message}`, code: 400};
+      return { error: `S3 error: ${error.message}`, code: 400 };
     }
 
-    return {error: 'An error occurred with the server', code: 500};
+    return { error: 'An error occurred with the server', code: 500 };
   }
 };
 
