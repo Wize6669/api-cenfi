@@ -1,9 +1,9 @@
 name: Build and Lift with Docker Compose
 
 on:
-  pull_request:
+  push:
     branches:
-      - releasev1
+      - main
 
 jobs:
   run_pull:
@@ -19,7 +19,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/cenfi-app/api-cenfi
-            touch testFile.txt
             git fetch --depth=1
             git reset --hard origin/main
             echo "Tearing down Docker Compose containers..."
