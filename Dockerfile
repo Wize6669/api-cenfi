@@ -20,4 +20,5 @@ COPY --chown=node:node --from=builder /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /usr/src/app/package.json ./
 COPY --chown=node:node --from=builder /usr/src/app/prisma ./prisma
 EXPOSE 3001
-CMD ["/bin/sh", "-c", "prisma migrate deploy && pnpm run start"]
+CMD ["/bin/sh", "-c", "node_modules/.bin/prisma migrate deploy && pnpm run start"]
+
